@@ -283,8 +283,8 @@ igloo_ro_t      igloo_ro_new__raw(const igloo_ro_type_t *type, const char *name,
 #define         igloo_ro_new_raw(type, name, associated)  igloo_RO_TO_TYPE(igloo_ro_new__raw(igloo_RO_GET_TYPE_BY_SYMBOL(type), (name), (associated)), type)
 
 igloo_ro_t      igloo_ro_new__simple(const igloo_ro_type_t *type, const char *name, igloo_ro_t associated, ...);
-#define         igloo_ro_new(type, ...)  igloo_RO_TO_TYPE(igloo_ro_new__simple(igloo_RO_GET_TYPE_BY_SYMBOL(type), NULL, igloo_RO_NULL, ## __VA_ARGS__), type)
-#define         igloo_ro_new_ext(type, name, associated, ...)  igloo_RO_TO_TYPE(igloo_ro_new__simple(igloo_RO_GET_TYPE_BY_SYMBOL(type), (name), (associated), ## __VA_ARGS__), type)
+#define         igloo_ro_new(type, ...)                         igloo_RO_TO_TYPE(igloo_ro_new__simple(igloo_RO_GET_TYPE_BY_SYMBOL(type), NULL, igloo_RO_NULL, ## __VA_ARGS__), type)
+#define         igloo_ro_new_ext(type, name, associated, ...)   igloo_RO_TO_TYPE(igloo_ro_new__simple(igloo_RO_GET_TYPE_BY_SYMBOL(type), (name), (associated), ## __VA_ARGS__), type)
 
 /* This increases the reference counter of the object */
 int             igloo_ro_ref(igloo_ro_t self);
