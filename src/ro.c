@@ -392,26 +392,37 @@ igloo_ro_t igloo_ro_get_interface(igloo_ro_t self, const igloo_ro_type_t *type, 
     return ret;
 }
 
-char *          igloo_ro_stringify(igloo_ro_t self)
+char *          igloo_ro_stringify(igloo_ro_t self, igloo_ro_sy_t flags)
 {
     igloo_ro_base_t *base = igloo_RO__GETBASE(self);
     char *ret = NULL;
 
-    if (!base)
-        return strdup("{igloo_RO_NULL}");
+    if (flags & igloo_RO_SY_DEFAULT)
+        flags |= igloo_RO_SY_OBJECT|igloo_RO_SY_CONTENT;
+
+
+    if (!base) {
+        if (flags & igloo_RO_SY_OBJECT) {
+            return strdup("{igloo_RO_NULL}");
+        } else {
+            return NULL;
+        }
+    }
 
     igloo_thread_mutex_lock(&(base->lock));
     if (!base->refc) {
-        int len;
-        char buf;
+        if (flags & igloo_RO_SY_OBJECT) {
+            int len;
+            char buf;
 
 #define STRINGIFY_FORMAT_WEAK "{%s@%p, weak}", base->type->type_name, base
-        len = snprintf(&buf, 1, STRINGIFY_FORMAT_WEAK);
-        if (len > 2) {
-            /* We add 2 bytes just to make sure no buggy interpretation of \0 inclusion could bite us. */
-            ret = calloc(1, len + 2);
-            if (ret) {
-                snprintf(ret, len + 1, STRINGIFY_FORMAT_WEAK);
+            len = snprintf(&buf, 1, STRINGIFY_FORMAT_WEAK);
+            if (len > 2) {
+                /* We add 2 bytes just to make sure no buggy interpretation of \0 inclusion could bite us. */
+                ret = calloc(1, len + 2);
+                if (ret) {
+                    snprintf(ret, len + 1, STRINGIFY_FORMAT_WEAK);
+                }
             }
         }
 
@@ -419,19 +430,21 @@ char *          igloo_ro_stringify(igloo_ro_t self)
         return ret;
     }
 
-    if (base->type->type_stringifycb) {
-        ret = base->type->type_stringifycb(self);
+    if (base->type->type_stringifycb && (flags & igloo_RO_SY_CONTENT)) {
+        ret = base->type->type_stringifycb(self, flags);
     } else {
-        int len;
-        char buf;
+        if (flags & igloo_RO_SY_OBJECT) {
+            int len;
+            char buf;
 
 #define STRINGIFY_FORMAT_FULL "{%s@%p, strong, name=\"%s\", associated=%p}", base->type->type_name, base, base->name, igloo_RO__GETBASE(base->associated)
-        len = snprintf(&buf, 1, STRINGIFY_FORMAT_FULL);
-        if (len > 2) {
-            /* We add 2 bytes just to make sure no buggy interpretation of \0 inclusion could bite us. */
-            ret = calloc(1, len + 2);
-            if (ret) {
-                snprintf(ret, len + 1, STRINGIFY_FORMAT_FULL);
+            len = snprintf(&buf, 1, STRINGIFY_FORMAT_FULL);
+            if (len > 2) {
+                /* We add 2 bytes just to make sure no buggy interpretation of \0 inclusion could bite us. */
+                ret = calloc(1, len + 2);
+                if (ret) {
+                    snprintf(ret, len + 1, STRINGIFY_FORMAT_FULL);
+                }
             }
         }
     }

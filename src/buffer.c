@@ -31,7 +31,7 @@ struct igloo_buffer_tag {
 };
 
 static void __free(igloo_ro_t self);
-static char * __stringify(igloo_ro_t self);
+static char * __stringify(igloo_ro_t self, igloo_ro_sy_t flags);
 
 igloo_RO_PUBLIC_TYPE(igloo_buffer_t,
         igloo_RO_TYPEDECL_FREE(__free),
@@ -141,7 +141,7 @@ int         igloo_buffer_get_string(igloo_buffer_t *buffer, const char **string)
     return 0;
 }
 
-static char * __stringify(igloo_ro_t self)
+static char * __stringify(igloo_ro_t self, igloo_ro_sy_t flags)
 {
     igloo_buffer_t *buffer = igloo_RO_TO_TYPE(self, igloo_buffer_t);
     const char *ret;

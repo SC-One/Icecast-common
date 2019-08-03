@@ -131,12 +131,34 @@ typedef igloo_ro_t (*igloo_ro_convert_t)(igloo_ro_t self, const igloo_ro_type_t 
  */
 typedef igloo_ro_t (*igloo_ro_get_interface_t)(igloo_ro_t self, const igloo_ro_type_t *type, const char *name, igloo_ro_t associated);
 
+/* Type used to store flags for stringify operation.
+ */
+#ifdef IGLOO_CTC_HAVE_STDINT_H
+typedef uint_least32_t igloo_ro_sy_t;
+#else
+typedef unsigned long int igloo_ro_sy_t;
+#endif
+/* No stringify flags set. Usefull for variable initialization. */
+#define igloo_RO_SY_NONE            ((igloo_ro_sy_t)0x0000)
+/* Stringify using defaults. */
+#define igloo_RO_SY_DEFAULT         ((igloo_ro_sy_t)0x1000)
+/* Stringify the object itself, do not touch the content.
+ * When set together with igloo_RO_SY_CONTENT the libigloo will select the mode.
+ */
+#define igloo_RO_SY_OBJECT          ((igloo_ro_sy_t)0x0001)
+/* Stringify the object's content.
+ * When set together with igloo_RO_SY_OBJECT the libigloo will select the mode.
+ */
+#define igloo_RO_SY_CONTENT         ((igloo_ro_sy_t)0x0002)
+
 /* Type used for callback called when the object needs to be converted to a string.
  *
  * This is used mostly for debugging or preseting the object to the user.
  * The callback is not expected to return a string that can be used to reconstruct the object.
+ *
+ * igloo_RO_SY_OBJECT is always set when this is called.
  */
-typedef char * (*igloo_ro_stringify_t)(igloo_ro_t self);
+typedef char * (*igloo_ro_stringify_t)(igloo_ro_t self, igloo_ro_sy_t flags);
 
 /* Type used as a result of a compare between objects.
  */
@@ -350,10 +372,13 @@ igloo_ro_t igloo_ro_get_interface(igloo_ro_t self, const igloo_ro_type_t *type, 
  * Parameters:
  *  self
  *      The object to convert to a string.
+ *  flags
+ *      Flags used to select options to the conversion.
+ *      Should normally be igloo_RO_SY_DEFAULT.
  * Returns:
  *  A string as allocated using malloc(3). The caller must call free(3).
  */
-char *          igloo_ro_stringify(igloo_ro_t self);
+char *          igloo_ro_stringify(igloo_ro_t self, igloo_ro_sy_t flags);
 
 /* Compare two objects.
  *
