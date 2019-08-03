@@ -59,6 +59,8 @@ void igloo_interface_base_free(igloo_ro_t self);
 igloo_ro_t igloo_interface_base_new_real(const igloo_ro_type_t *type, size_t description_length, const igloo_interface_base_ifdesc_t *ifdesc, igloo_ro_t backend_object, void *backend_userdata, const char *name, igloo_ro_t associated);
 #define igloo_interface_base_new(type, ifdesc, backend_object, backend_userdata, name, associated) igloo_RO_TO_TYPE(igloo_interface_base_new_real(igloo_ro__type__ ## type, sizeof(*(ifdesc)), (const igloo_interface_base_ifdesc_t*)(ifdesc), (backend_object), (backend_userdata), (name), (associated)), type)
 
+size_t igloo_private__vsnprintf_Hstrlen(const char *str, int is_alt, int allow_space);
 void igloo_private__vsnprintf(char *str, size_t size, const char *format, va_list ap);
+void igloo_private__snprintf(char *str, size_t size, const char *format, ...);
 
 #endif

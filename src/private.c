@@ -25,7 +25,7 @@ static inline int __vsnprintf__is_print(int c, int allow_space)
     }
 }
 
-static inline size_t __vsnprintf__strlen(const char *str, int is_alt, int allow_space)
+size_t igloo_private__vsnprintf_Hstrlen(const char *str, int is_alt, int allow_space)
 {
     size_t ret = 0;
 
@@ -61,6 +61,7 @@ void igloo_private__vsnprintf(char *str, size_t size, const char *format, va_lis
     int block_space = 0;
     int block_alt = 0;
     const char * arg;
+    const void * argp;
     char buf[80];
 
     for (; *format && size; format++)
@@ -118,8 +119,13 @@ void igloo_private__vsnprintf(char *str, size_t size, const char *format, va_lis
                     format--;
                     break;
                 case 'p':
-                    snprintf(buf, sizeof(buf), "%p", (void*)va_arg(ap, void *));
-                    arg = buf;
+                    argp = va_arg(ap, void *);
+                    if (!argp && block_alt) {
+                        arg = "-";
+                    } else {
+                        snprintf(buf, sizeof(buf), "%p", argp);
+                        arg = buf;
+                    }
                 case 'd':
                 case 'i':
                 case 'u':
@@ -169,7 +175,7 @@ void igloo_private__vsnprintf(char *str, size_t size, const char *format, va_lis
                     if (!arg && !block_alt)
                         arg = "(null)";
                     if (!block_len) {
-                        block_len = __vsnprintf__strlen(arg, block_alt, block_space);
+                        block_len = igloo_private__vsnprintf_Hstrlen(arg, block_alt, block_space);
                     }
 
                     // the if() is the outer structure so the inner for()
@@ -231,3 +237,10 @@ void igloo_private__vsnprintf(char *str, size_t size, const char *format, va_lis
     *str = 0;
 }
 
+void igloo_private__snprintf(char *str, size_t size, const char *format, ...)
+{
+    va_list ap;
+    va_start(ap, format);
+    igloo_private__vsnprintf(str, size, format, ap);
+    va_end(ap);
+}

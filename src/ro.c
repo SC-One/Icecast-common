@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include <igloo/ro.h>
+#include "private.h"
 
 /* This is not static as it is used by igloo_RO_TYPEDECL_NEW_NOOP() */
 int igloo_ro_new__return_zero(igloo_ro_t self, const igloo_ro_type_t *type, va_list ap)
@@ -434,16 +435,14 @@ char *          igloo_ro_stringify(igloo_ro_t self, igloo_ro_sy_t flags)
         ret = base->type->type_stringifycb(self, flags);
     } else {
         if (flags & igloo_RO_SY_OBJECT) {
-            int len;
-            char buf;
+#define STRINGIFY_FORMAT_FULL_FORMAT "{%s@%p, strong, name=%# H, associated=%#p}"
+#define STRINGIFY_FORMAT_FULL STRINGIFY_FORMAT_FULL_FORMAT, base->type->type_name, base, base->name, igloo_RO__GETBASE(base->associated)
+            int len = strlen(base->type->type_name) + 2*(2+64/4) + strlen(STRINGIFY_FORMAT_FULL_FORMAT) + igloo_private__vsnprintf_Hstrlen(base->name, 1, 1) + 1;
 
-#define STRINGIFY_FORMAT_FULL "{%s@%p, strong, name=\"%s\", associated=%p}", base->type->type_name, base, base->name, igloo_RO__GETBASE(base->associated)
-            len = snprintf(&buf, 1, STRINGIFY_FORMAT_FULL);
             if (len > 2) {
-                /* We add 2 bytes just to make sure no buggy interpretation of \0 inclusion could bite us. */
-                ret = calloc(1, len + 2);
+                ret = calloc(1, len);
                 if (ret) {
-                    snprintf(ret, len + 1, STRINGIFY_FORMAT_FULL);
+                    igloo_private__snprintf(ret, len + 1, STRINGIFY_FORMAT_FULL);
                 }
             }
         }
