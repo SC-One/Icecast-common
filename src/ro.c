@@ -435,14 +435,22 @@ char *          igloo_ro_stringify(igloo_ro_t self, igloo_ro_sy_t flags)
         ret = base->type->type_stringifycb(self, flags);
     } else {
         if (flags & igloo_RO_SY_OBJECT) {
-#define STRINGIFY_FORMAT_FULL_FORMAT "{%s@%p, strong, name=%# H, associated=%#p}"
-#define STRINGIFY_FORMAT_FULL STRINGIFY_FORMAT_FULL_FORMAT, base->type->type_name, base, base->name, igloo_RO__GETBASE(base->associated)
-            int len = strlen(base->type->type_name) + 2*(2+64/4) + strlen(STRINGIFY_FORMAT_FULL_FORMAT) + igloo_private__vsnprintf_Hstrlen(base->name, 1, 1) + 1;
+            if (igloo_RO_IS_NULL(base->associated)) {
+                static const char *format = "{%s@%p, strong, name=%# H, associated=-}";
+                size_t len = strlen(base->type->type_name) + 1*(2+64/4) + strlen(format) + igloo_private__vsnprintf_Hstrlen(base->name, 1, 1) + 1;
 
-            if (len > 2) {
                 ret = calloc(1, len);
                 if (ret) {
-                    igloo_private__snprintf(ret, len + 1, STRINGIFY_FORMAT_FULL);
+                    igloo_private__snprintf(ret, len + 1, format, base->type->type_name, base, base->name);
+                }
+            } else {
+                static const char *format = "{%s@%p, strong, name=%# H, associated={%s@%p}}";
+                igloo_ro_base_t *associated = igloo_RO__GETBASE(base->associated);
+                size_t len = strlen(base->type->type_name) + strlen(associated->type->type_name) + 2*(2+64/4) + strlen(format) + igloo_private__vsnprintf_Hstrlen(base->name, 1, 1) + 1;
+
+                ret = calloc(1, len);
+                if (ret) {
+                    igloo_private__snprintf(ret, len + 1, format, base->type->type_name, base, base->name, associated->type->type_name, associated);
                 }
             }
         }
