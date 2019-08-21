@@ -66,7 +66,13 @@
  */
 uint64_t igloo_timing_get_time(void)
 {
-#ifdef HAVE_GETTIMEOFDAY
+#ifdef CLOCK_MONOTONIC
+    struct timespec ts = {0, 0};
+
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+
+    return (uint64_t)(ts.tv_sec) * 1000 + (uint64_t)(ts.tv_nsec) / 1000000;
+#elif HAVE_GETTIMEOFDAY
     struct timeval mtv;
 
     gettimeofday(&mtv, NULL);
