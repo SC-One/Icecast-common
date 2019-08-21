@@ -28,7 +28,8 @@ ctest_refobject_test_SOURCES = %reldir%/ctest_refobject.c
 ctest_refobject_test_LDADD = libice_ctest.la \
 			     thread/libicethread.la \
 			     avl/libiceavl.la \
-			     src/ro.o
+			     src/ro.o \
+			     src/private.o
 check_PROGRAMS += ctest_refobject.test
 
 ctest_buffer_test_SOURCES = %reldir%/ctest_buffer.c
@@ -36,6 +37,7 @@ ctest_buffer_test_LDADD = libice_ctest.la \
 			  thread/libicethread.la \
 			  avl/libiceavl.la \
 			  src/ro.o \
+			  src/private.o \
 			  src/buffer.o
 check_PROGRAMS += ctest_buffer.test
 
@@ -44,6 +46,7 @@ ctest_list_test_LDADD = libice_ctest.la \
 			thread/libicethread.la \
 			avl/libiceavl.la \
 			src/ro.o \
+			src/private.o \
 			src/list.o
 check_PROGRAMS += ctest_list.test
 
@@ -52,6 +55,7 @@ ctest_reportxml_test_LDADD = libice_ctest.la \
 			thread/libicethread.la \
 			avl/libiceavl.la \
 			src/ro.o \
+			src/private.o \
 			src/reportxml.o
 check_PROGRAMS += ctest_reportxml.test
 
@@ -59,8 +63,8 @@ ctest_logmsg_test_SOURCES = %reldir%/ctest_logmsg.c
 ctest_logmsg_test_LDADD = libice_ctest.la \
 			thread/libicethread.la \
 			avl/libiceavl.la \
-			src/private.o \
 			src/ro.o \
+			src/private.o \
 			src/io.o \
 			src/list.o \
 			src/interface.o \
