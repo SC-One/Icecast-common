@@ -2,7 +2,7 @@
 
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = avl httpp log net thread timing
+SUBDIRS = avl httpp log net thread
 
 lib_LTLIBRARIES = libigloo.la
 
@@ -42,14 +42,14 @@ libigloo_la_SOURCES = \
     src/logmsg.c \
     src/buffer.c \
     src/list.c \
-    src/reportxml.c
+    src/reportxml.c \
+    src/timing.c
 libigloo_la_LIBADD = \
     avl/libiceavl.la \
     httpp/libicehttpp.la \
     log/libicelog.la \
     net/libicenet.la \
-    thread/libicethread.la \
-    timing/libicetiming.la
+    thread/libicethread.la
 
 pkgconfig_DATA = igloo.pc
 
