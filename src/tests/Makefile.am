@@ -73,5 +73,10 @@ ctest_logmsg_test_LDADD = libice_ctest.la \
 			src/logmsg.o
 check_PROGRAMS += ctest_logmsg.test
 
+ctest_timing_test_SOURCES = %reldir%/ctest_timing.c
+ctest_timing_test_LDADD = libice_ctest.la \
+			src/timing.o
+check_PROGRAMS += ctest_timing.test
+
 # Add all programs to TESTS
 TESTS = $(check_PROGRAMS)
