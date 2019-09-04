@@ -32,6 +32,12 @@ extern "C" {
 typedef struct igloo_list_iterator_tag igloo_list_iterator_t;
 typedef struct igloo_list_iterator_tag igloo_list_iterator_storage_t;
 
+/* Policy for element allocation */
+typedef enum {
+    /* Grow the list as needed */
+    igloo_LIST_POLICY_GROW = 0
+} igloo_list_policy_t;
+
 igloo_RO_FORWARD_TYPE(igloo_list_t);
 
 /* ---[ PRIVATE ]--- */
@@ -52,6 +58,8 @@ struct igloo_list_iterator_tag {
 int                     igloo_list_clear(igloo_list_t *list);
 /* Preallocate space for later mass-adding of elements. */
 void                    igloo_list_preallocate(igloo_list_t *list, size_t request);
+/* Set the element allocation policy */
+int                     igloo_list_set_policy(igloo_list_t *list, igloo_list_policy_t policy, ssize_t size);
 /* Limit elements to those of the given type. */
 int                     igloo_list_set_type__real(igloo_list_t *list, const igloo_ro_type_t *type);
 #define                 igloo_list_set_type(list,type) igloo_list_set_type__real((list),(igloo_ro__type__ ## type))

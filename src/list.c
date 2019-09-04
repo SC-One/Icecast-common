@@ -32,6 +32,7 @@ struct igloo_list_tag {
     size_t length;
     igloo_ro_t *elements;
     const igloo_ro_type_t *type;
+    igloo_list_policy_t policy;
 };
 
 static void __free(igloo_ro_t self);
@@ -101,6 +102,28 @@ void                    igloo_list_preallocate(igloo_list_t *list, size_t reques
 
     if (list->offset > 16 || ((list->length - list->fill) < request))
         igloo_list_preallocate__realign(list);
+}
+
+int                     igloo_list_set_policy(igloo_list_t *list, igloo_list_policy_t policy, ssize_t size)
+{
+    if (!igloo_RO_IS_VALID(list, igloo_list_t))
+        return -1;
+
+    switch (policy) {
+        case igloo_LIST_POLICY_GROW:
+            list->policy = policy;
+
+            if (size > 0 && (size_t)size > list->length) {
+                igloo_list_preallocate(list, size - list->length);
+            } else {
+                igloo_list_preallocate(list, 0);
+            }
+
+            return 0;
+        break;
+    }
+
+    return -1;
 }
 
 int                     igloo_list_set_type__real(igloo_list_t *list, const igloo_ro_type_t *type)
