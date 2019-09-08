@@ -85,19 +85,27 @@ void                    igloo_list_preallocate(igloo_list_t *list, size_t reques
     if (!igloo_RO_IS_VALID(list, igloo_list_t))
         return;
 
-    new_len = (list->fill - list->offset) + request;
+    switch (list->policy) {
+        case igloo_LIST_POLICY_GROW:
+            new_len = (list->fill - list->offset) + request;
 
-    if (new_len > list->length || (new_len + 32) > list->length) {
-        igloo_ro_t *n;
+            if (new_len > list->length || (new_len + 32) > list->length) {
+                igloo_ro_t *n;
 
-        igloo_list_preallocate__realign(list);
+                igloo_list_preallocate__realign(list);
 
-        n = realloc(list->elements, new_len*sizeof(*list->elements));
-        if (!n)
-            return;
+                n = realloc(list->elements, new_len*sizeof(*list->elements));
+                if (!n)
+                    return;
 
-        list->elements = n;
-        list->length = new_len;
+                list->elements = n;
+                list->length = new_len;
+            }
+        break;
+        /* policies we do not change size: */
+        case igloo_LIST_POLICY_FIXED:
+        case igloo_LIST_POLICY_FIXED_PIPE:
+        break;
     }
 
     if (list->offset > 16 || ((list->length - list->fill) < request))
@@ -118,6 +126,42 @@ int                     igloo_list_set_policy(igloo_list_t *list, igloo_list_pol
             } else {
                 igloo_list_preallocate(list, 0);
             }
+
+            return 0;
+        break;
+        case igloo_LIST_POLICY_FIXED:
+        case igloo_LIST_POLICY_FIXED_PIPE:
+            if (size < 1)
+                return -1;
+
+            if ((size_t)size > list->length) {
+                igloo_ro_t *n;
+
+                n = realloc(list->elements, size*sizeof(*list->elements));
+                if (!n)
+                    return -1;
+
+                list->elements = n;
+                list->length = size;
+            } else if ((size_t)size < list->length) {
+                if ((list->fill - list->offset) > (size_t)size)
+                    return -1;
+
+                igloo_list_preallocate__realign(list);
+
+                /* try to resize if the old list was much longer. But ignore errors as we can still work with the old list */
+                if (list->length > (((size_t)size) + 128)) {
+                    igloo_ro_t *n;
+
+                    n = realloc(list->elements, size*sizeof(*list->elements));
+                    if (n)
+                        list->elements = n;
+                }
+
+                list->length = size;
+            }
+
+            list->policy = policy;
 
             return 0;
         break;
@@ -153,8 +197,23 @@ int                     igloo_list_push(igloo_list_t *list, igloo_ro_t element)
 
     igloo_list_preallocate(list, 1);
 
-    if (list->fill == list->length)
-        return -1;
+    if (list->fill == list->length) {
+        igloo_ro_t old;
+
+        if (list->policy != igloo_LIST_POLICY_FIXED_PIPE)
+            return -1;
+
+        /* If we are in PIPE mode. Just remove one element from the begin */
+        old = igloo_list_shift(list);
+        igloo_ro_unref(old);
+
+        /* Rearrange the internal pointers */
+        igloo_list_preallocate(list, 1);
+
+        /* Check if we have space, if not something above failed. In that case fail as well. */
+        if (list->fill == list->length)
+            return -1;
+    }
 
     if (igloo_ro_ref(element) != 0)
         return -1;
@@ -177,8 +236,23 @@ int                     igloo_list_unshift(igloo_list_t *list, igloo_ro_t elemen
     if (!list->offset) {
         igloo_list_preallocate(list, 1);
 
-        if (list->fill == list->length)
-            return -1;
+        if (list->fill == list->length) {
+            igloo_ro_t old;
+
+            if (list->policy != igloo_LIST_POLICY_FIXED_PIPE)
+                return -1;
+
+            /* If we are in PIPE mode. Just remove one element from the end */
+            old = igloo_list_pop(list);
+            igloo_ro_unref(old);
+
+            /* Rearrange the internal pointers */
+            igloo_list_preallocate(list, 1);
+
+            /* Check if we have space, if not something above failed. In that case fail as well. */
+            if (list->fill == list->length)
+                return -1;
+        }
 
         memmove(list->elements + 1, list->elements, sizeof(*list->elements)*list->fill);
         list->offset++;
@@ -254,6 +328,7 @@ static inline int igloo_list_copy_elements(igloo_list_t *list, igloo_list_t *ele
 int                     igloo_list_merge(igloo_list_t *list, igloo_list_t *elements)
 {
     size_t old_fill;
+    size_t extra;
 
     if (!igloo_RO_IS_VALID(list, igloo_list_t) || !igloo_RO_IS_VALID(elements, igloo_list_t))
         return -1;
@@ -267,7 +342,41 @@ int                     igloo_list_merge(igloo_list_t *list, igloo_list_t *eleme
         }
     }
 
-    igloo_list_preallocate(list, elements->fill - elements->offset);
+    extra = elements->fill - elements->offset;
+
+    igloo_list_preallocate(list, extra);
+
+    switch (list->policy) {
+        case igloo_LIST_POLICY_GROW:
+            /* We're fine as we will grow as needed. */
+        break;
+        case igloo_LIST_POLICY_FIXED:
+            /* fail if target is too short */
+            if ((list->fill - list->offset + extra) > list->length)
+                return -1;
+        break;
+        case igloo_LIST_POLICY_FIXED_PIPE:
+            /* fail if target is too short */
+            if (extra > list->length)
+                return -1;
+
+            if (list->offset)
+                return -1;
+
+            if ((list->length - list->fill) < extra) {
+                size_t needed = extra - (list->length - list->fill);
+                size_t i;
+
+                for (i = 0; i < needed; i++) {
+                    igloo_ro_unref(list->elements[i]);
+                    list->elements[i] = igloo_RO_NULL;
+                    list->offset++;
+                }
+
+                igloo_list_preallocate(list, extra);
+            }
+        break;
+    }
 
     old_fill = list->fill;
     if (igloo_list_copy_elements(list, elements) != 0) {

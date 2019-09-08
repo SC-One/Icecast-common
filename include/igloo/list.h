@@ -35,7 +35,11 @@ typedef struct igloo_list_iterator_tag igloo_list_iterator_storage_t;
 /* Policy for element allocation */
 typedef enum {
     /* Grow the list as needed */
-    igloo_LIST_POLICY_GROW = 0
+    igloo_LIST_POLICY_GROW = 0,
+    /* Using a fixed length, when a new object is added and there is no space the object is refused */
+    igloo_LIST_POLICY_FIXED,
+    /* Using a fixed length, when a new object is added and there is no space a object on the other side is removed to make space */
+    igloo_LIST_POLICY_FIXED_PIPE
 } igloo_list_policy_t;
 
 igloo_RO_FORWARD_TYPE(igloo_list_t);
