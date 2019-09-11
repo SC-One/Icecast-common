@@ -170,7 +170,6 @@ AC_CONFIG_FILES([
   thread/Makefile
   log/Makefile
   net/Makefile
-  timing/Makefile
   igloo.pc
 ])
 
