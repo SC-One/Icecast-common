@@ -550,6 +550,43 @@ static void test_list_policy_fixed_pipe_merge(void) {
     ctest_test("un-referenced dstlist", igloo_ro_unref(dstlist) == 0);
 }
 
+static void test_list_remove(void) {
+    igloo_list_t *list;
+    igloo_ro_base_t *element;
+    igloo_ro_base_t *second_element = NULL;
+    size_t i;
+    size_t count = 0;
+
+    list = igloo_ro_new(igloo_list_t);
+    ctest_test("list created", !igloo_RO_IS_NULL(list));
+
+    for (i = 0; i < 4; i++) {
+        element = igloo_ro_new(igloo_ro_base_t);
+        ctest_test("test object created", !igloo_RO_IS_NULL(element));
+        ctest_test("test object pushed", igloo_list_push(list, element) == 0);
+
+        if (i == 1) {
+            second_element = element;
+            ctest_test("referenced 2nd test object", igloo_ro_ref(second_element) == 0);
+        }
+
+        ctest_test("un-referenced test object", igloo_ro_unref(element) == 0);
+    }
+
+    ctest_test("2nd element was removed", igloo_list_remove(list, second_element) == 0);
+
+    igloo_list_foreach(list, igloo_ro_base_t, ret, {
+        ctest_test("Returned element is valid", igloo_RO_IS_VALID(ret, igloo_ro_base_t));
+        ctest_test("Returned element is not same as 2nd element", !igloo_RO_IS_SAME(ret, second_element));
+        count++;
+    });
+
+    ctest_test("Number of returned elements is correct", count == 3);
+
+    ctest_test("un-referenced 2nd test object", igloo_ro_unref(second_element) == 0);
+    ctest_test("un-referenced list", igloo_ro_unref(list) == 0);
+}
+
 int main (void)
 {
     ctest_init();
@@ -577,6 +614,8 @@ int main (void)
     test_list_policy_fixed_pipe_push();
     test_list_policy_fixed_pipe_unshift();
     test_list_policy_fixed_pipe_merge();
+
+    test_list_remove();
 
     ctest_fin();
 

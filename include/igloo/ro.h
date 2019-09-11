@@ -273,6 +273,8 @@ int             igloo_RO_IS_VALID_raw(igloo_ro_t object, const igloo_ro_type_t *
 int             igloo_RO_HAS_TYPE_raw(igloo_ro_t object, const igloo_ro_type_t *type);
 #define igloo_RO_HAS_TYPE(x,type)   igloo_RO_HAS_TYPE_raw((x), (type))
 
+#define igloo_RO_IS_SAME(a,b)       (igloo_RO__GETBASE((a)) == igloo_RO__GETBASE((b)))
+
 /* Create a new refobject
  * The type argument gives the type for the new object,
  * the name for the object is given by name, and

@@ -79,6 +79,12 @@ igloo_ro_t              igloo_list_pop(igloo_list_t *list);
 /* Merge the content of the list elements into the list list. The list elements is not changed. */
 int                     igloo_list_merge(igloo_list_t *list, igloo_list_t *elements);
 
+/* Remove a single element from the list.
+ * Note: This is not very efficient as the list is first searched for the element
+ *       and then reorganized so there is no gap.
+ */
+int                     igloo_list_remove(igloo_list_t *list, igloo_ro_t element);
+
 /* Creates a new iterator that can be used to walk the list.
  * The memory pointed to by storage of size storage_length is used to store the iterator's internal
  * values. It must be allocated (e.g. on stack) untill igloo_list_iterator_end() is called.

@@ -394,6 +394,25 @@ int                     igloo_list_merge(igloo_list_t *list, igloo_list_t *eleme
     return 0;
 }
 
+int                     igloo_list_remove(igloo_list_t *list, igloo_ro_t element)
+{
+    size_t i;
+
+    if (!igloo_RO_IS_VALID(list, igloo_list_t) || igloo_RO_IS_NULL(element))
+        return -1;
+
+    for (i = list->offset; i < list->fill; i++) {
+        if (igloo_RO_IS_SAME(list->elements[i], element)) {
+            igloo_ro_unref(list->elements[i]);
+            memmove(list->elements + i, list->elements + i + 1, (list->fill - i - 1)*sizeof(*list->elements));
+            list->fill--;
+            return 0;
+        }
+    }
+
+    return -1;
+}
+
 igloo_list_iterator_t * igloo_list_iterator_start(igloo_list_t *list, void *storage, size_t storage_length)
 {
     igloo_list_iterator_t *iterator;
