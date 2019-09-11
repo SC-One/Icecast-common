@@ -391,6 +391,202 @@ static void test_list_foreach(void)
     ctest_test("un-referenced list", igloo_ro_unref(list) == 0);
 }
 
+static void test_list_policy_grow(void) {
+    igloo_list_t *list;
+    size_t i;
+
+    list = igloo_ro_new(igloo_list_t);
+    ctest_test("list created", !igloo_RO_IS_NULL(list));
+
+    ctest_test("Set policy to grow with size 1", igloo_list_set_policy(list, igloo_LIST_POLICY_GROW, 1) == 0);
+
+    for (i = 0; i < 4; i++) {
+        igloo_ro_base_t *element = igloo_ro_new(igloo_ro_base_t);
+        ctest_test("test object created", !igloo_RO_IS_NULL(element));
+        ctest_test("test object pushed", igloo_list_push(list, element) == 0);
+        ctest_test("un-referenced test object", igloo_ro_unref(element) == 0);
+    }
+
+    ctest_test("un-referenced list", igloo_ro_unref(list) == 0);
+}
+
+static void test_list_policy_fixed(void) {
+    igloo_list_t *list;
+    igloo_ro_base_t *element;
+    size_t i;
+
+
+    list = igloo_ro_new(igloo_list_t);
+    ctest_test("list created", !igloo_RO_IS_NULL(list));
+
+    ctest_test("Set policy to fixed with size 3", igloo_list_set_policy(list, igloo_LIST_POLICY_FIXED, 3) == 0);
+
+    for (i = 0; i < 6; i++) {
+        element = igloo_ro_new(igloo_ro_base_t);
+        ctest_test("test object created", !igloo_RO_IS_NULL(element));
+        if (i < 3) {
+            ctest_test("test object pushed", igloo_list_push(list, element) == 0);
+        } else {
+            ctest_test("test object can not be pushed", igloo_list_push(list, element) != 0);
+        }
+        ctest_test("un-referenced test object", igloo_ro_unref(element) == 0);
+    }
+
+    element = igloo_RO_TO_TYPE(igloo_list_shift(list), igloo_ro_base_t);
+    ctest_test("shifted element", !igloo_RO_IS_NULL(element));
+    ctest_test("un-referenced element", igloo_ro_unref(element) == 0);
+
+    for (i = 0; i < 3; i++) {
+        element = igloo_ro_new(igloo_ro_base_t);
+        ctest_test("test object created", !igloo_RO_IS_NULL(element));
+        if (i < 1) {
+            ctest_test("test object pushed", igloo_list_push(list, element) == 0);
+        } else {
+            ctest_test("test object can not be pushed", igloo_list_push(list, element) != 0);
+        }
+        ctest_test("un-referenced test object", igloo_ro_unref(element) == 0);
+    }
+
+    ctest_test("un-referenced list", igloo_ro_unref(list) == 0);
+}
+
+static void test_list_policy_fixed_pipe_push(void) {
+    igloo_list_t *list;
+    igloo_ro_base_t *element;
+    igloo_ro_base_t *second_element = NULL;
+    size_t i;
+
+
+    list = igloo_ro_new(igloo_list_t);
+    ctest_test("list created", !igloo_RO_IS_NULL(list));
+
+    ctest_test("Set policy to fixed pipe with size 3", igloo_list_set_policy(list, igloo_LIST_POLICY_FIXED_PIPE, 3) == 0);
+
+    for (i = 0; i < 4; i++) {
+        element = igloo_ro_new(igloo_ro_base_t);
+        ctest_test("test object created", !igloo_RO_IS_NULL(element));
+        ctest_test("test object pushed", igloo_list_push(list, element) == 0);
+
+        if (i == 1) {
+            second_element = element;
+            ctest_test("referenced 2nd test object", igloo_ro_ref(second_element) == 0);
+        }
+
+        ctest_test("un-referenced test object", igloo_ro_unref(element) == 0);
+    }
+
+    element = igloo_RO_TO_TYPE(igloo_list_shift(list), igloo_ro_base_t);
+    ctest_test("shifted element", !igloo_RO_IS_NULL(element));
+    ctest_test("shifted element matches 2nd test object", igloo_RO_TO_TYPE(element, igloo_ro_base_t) == second_element);
+    ctest_test("un-referenced element", igloo_ro_unref(element) == 0);
+
+    ctest_test("un-referenced 2nd test object", igloo_ro_unref(second_element) == 0);
+    ctest_test("un-referenced list", igloo_ro_unref(list) == 0);
+}
+
+static void test_list_policy_fixed_pipe_unshift(void) {
+    igloo_list_t *list;
+    igloo_ro_base_t *element;
+    igloo_ro_base_t *second_element = NULL;
+    size_t i;
+
+
+    list = igloo_ro_new(igloo_list_t);
+    ctest_test("list created", !igloo_RO_IS_NULL(list));
+
+    ctest_test("Set policy to fixed pipe with size 3", igloo_list_set_policy(list, igloo_LIST_POLICY_FIXED_PIPE, 3) == 0);
+
+    for (i = 0; i < 4; i++) {
+        element = igloo_ro_new(igloo_ro_base_t);
+        ctest_test("test object created", !igloo_RO_IS_NULL(element));
+        ctest_test("test object unshifted", igloo_list_unshift(list, element) == 0);
+
+        if (i == 1) {
+            second_element = element;
+            ctest_test("referenced 2nd test object", igloo_ro_ref(second_element) == 0);
+        }
+
+        ctest_test("un-referenced test object", igloo_ro_unref(element) == 0);
+    }
+
+    element = igloo_RO_TO_TYPE(igloo_list_pop(list), igloo_ro_base_t);
+    ctest_test("poped element", !igloo_RO_IS_NULL(element));
+    ctest_test("poped element matches 2nd test object", igloo_RO_TO_TYPE(element, igloo_ro_base_t) == second_element);
+    ctest_test("un-referenced element", igloo_ro_unref(element) == 0);
+
+    ctest_test("un-referenced 2nd test object", igloo_ro_unref(second_element) == 0);
+    ctest_test("un-referenced list", igloo_ro_unref(list) == 0);
+}
+
+static void test_list_policy_fixed_pipe_merge(void) {
+    igloo_list_t *dstlist;
+    igloo_list_t *srclist;
+    igloo_ro_base_t *element;
+    size_t i;
+
+    dstlist = igloo_ro_new(igloo_list_t);
+    ctest_test("dstlist created", !igloo_RO_IS_NULL(dstlist));
+
+    ctest_test("Set policy to fixed with size 3", igloo_list_set_policy(dstlist, igloo_LIST_POLICY_FIXED, 3) == 0);
+
+    srclist = igloo_ro_new(igloo_list_t);
+    ctest_test("srclist created", !igloo_RO_IS_NULL(srclist));
+
+    for (i = 0; i < 2; i++) {
+        element = igloo_ro_new(igloo_ro_base_t);
+        ctest_test("test object created", !igloo_RO_IS_NULL(element));
+        ctest_test("test object pushed", igloo_list_push(srclist, element) == 0);
+        ctest_test("un-referenced test object", igloo_ro_unref(element) == 0);
+    }
+
+    ctest_test("merged source list into destination list", igloo_list_merge(dstlist, srclist) == 0);
+    ctest_test("merged source list into destination list fails", igloo_list_merge(dstlist, srclist) != 0);
+
+    ctest_test("Set policy to fixed pipe with size 3", igloo_list_set_policy(dstlist, igloo_LIST_POLICY_FIXED_PIPE, 3) == 0);
+
+    ctest_test("merged source list into destination list", igloo_list_merge(dstlist, srclist) == 0);
+
+    ctest_test("un-referenced srclist", igloo_ro_unref(srclist) == 0);
+    ctest_test("un-referenced dstlist", igloo_ro_unref(dstlist) == 0);
+}
+
+static void test_list_remove(void) {
+    igloo_list_t *list;
+    igloo_ro_base_t *element;
+    igloo_ro_base_t *second_element = NULL;
+    size_t i;
+    size_t count = 0;
+
+    list = igloo_ro_new(igloo_list_t);
+    ctest_test("list created", !igloo_RO_IS_NULL(list));
+
+    for (i = 0; i < 4; i++) {
+        element = igloo_ro_new(igloo_ro_base_t);
+        ctest_test("test object created", !igloo_RO_IS_NULL(element));
+        ctest_test("test object pushed", igloo_list_push(list, element) == 0);
+
+        if (i == 1) {
+            second_element = element;
+            ctest_test("referenced 2nd test object", igloo_ro_ref(second_element) == 0);
+        }
+
+        ctest_test("un-referenced test object", igloo_ro_unref(element) == 0);
+    }
+
+    ctest_test("2nd element was removed", igloo_list_remove(list, second_element) == 0);
+
+    igloo_list_foreach(list, igloo_ro_base_t, ret, {
+        ctest_test("Returned element is valid", igloo_RO_IS_VALID(ret, igloo_ro_base_t));
+        ctest_test("Returned element is not same as 2nd element", !igloo_RO_IS_SAME(ret, second_element));
+        count++;
+    });
+
+    ctest_test("Number of returned elements is correct", count == 3);
+
+    ctest_test("un-referenced 2nd test object", igloo_ro_unref(second_element) == 0);
+    ctest_test("un-referenced list", igloo_ro_unref(list) == 0);
+}
+
 int main (void)
 {
     ctest_init();
@@ -412,6 +608,14 @@ int main (void)
     test_list_iterator();
 
     test_list_foreach();
+
+    test_list_policy_grow();
+    test_list_policy_fixed();
+    test_list_policy_fixed_pipe_push();
+    test_list_policy_fixed_pipe_unshift();
+    test_list_policy_fixed_pipe_merge();
+
+    test_list_remove();
 
     ctest_fin();
 

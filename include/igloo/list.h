@@ -32,6 +32,16 @@ extern "C" {
 typedef struct igloo_list_iterator_tag igloo_list_iterator_t;
 typedef struct igloo_list_iterator_tag igloo_list_iterator_storage_t;
 
+/* Policy for element allocation */
+typedef enum {
+    /* Grow the list as needed */
+    igloo_LIST_POLICY_GROW = 0,
+    /* Using a fixed length, when a new object is added and there is no space the object is refused */
+    igloo_LIST_POLICY_FIXED,
+    /* Using a fixed length, when a new object is added and there is no space a object on the other side is removed to make space */
+    igloo_LIST_POLICY_FIXED_PIPE
+} igloo_list_policy_t;
+
 igloo_RO_FORWARD_TYPE(igloo_list_t);
 
 /* ---[ PRIVATE ]--- */
@@ -52,6 +62,8 @@ struct igloo_list_iterator_tag {
 int                     igloo_list_clear(igloo_list_t *list);
 /* Preallocate space for later mass-adding of elements. */
 void                    igloo_list_preallocate(igloo_list_t *list, size_t request);
+/* Set the element allocation policy */
+int                     igloo_list_set_policy(igloo_list_t *list, igloo_list_policy_t policy, ssize_t size);
 /* Limit elements to those of the given type. */
 int                     igloo_list_set_type__real(igloo_list_t *list, const igloo_ro_type_t *type);
 #define                 igloo_list_set_type(list,type) igloo_list_set_type__real((list),(igloo_ro__type__ ## type))
@@ -66,6 +78,12 @@ igloo_ro_t              igloo_list_pop(igloo_list_t *list);
 
 /* Merge the content of the list elements into the list list. The list elements is not changed. */
 int                     igloo_list_merge(igloo_list_t *list, igloo_list_t *elements);
+
+/* Remove a single element from the list.
+ * Note: This is not very efficient as the list is first searched for the element
+ *       and then reorganized so there is no gap.
+ */
+int                     igloo_list_remove(igloo_list_t *list, igloo_ro_t element);
 
 /* Creates a new iterator that can be used to walk the list.
  * The memory pointed to by storage of size storage_length is used to store the iterator's internal
