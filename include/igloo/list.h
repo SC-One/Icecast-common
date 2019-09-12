@@ -85,6 +85,9 @@ int                     igloo_list_merge(igloo_list_t *list, igloo_list_t *eleme
  */
 int                     igloo_list_remove(igloo_list_t *list, igloo_ro_t element);
 
+/* Forward all the objects in the list to the given object handler */
+int                     igloo_list_forward(igloo_list_t *list, igloo_objecthandler_t *handler);
+
 /* Creates a new iterator that can be used to walk the list.
  * The memory pointed to by storage of size storage_length is used to store the iterator's internal
  * values. It must be allocated (e.g. on stack) untill igloo_list_iterator_end() is called.

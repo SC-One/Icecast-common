@@ -24,6 +24,7 @@
 #include <stdlib.h>
 
 #include <igloo/list.h>
+#include <igloo/objecthandler.h>
 
 struct igloo_list_tag {
     igloo_ro_base_t __base;
@@ -411,6 +412,20 @@ int                     igloo_list_remove(igloo_list_t *list, igloo_ro_t element
     }
 
     return -1;
+}
+
+int                     igloo_list_forward(igloo_list_t *list, igloo_objecthandler_t *handler)
+{
+    size_t i;
+
+    if (!igloo_RO_IS_VALID(list, igloo_list_t) || !igloo_RO_IS_VALID(handler, igloo_objecthandler_t))
+        return -1;
+
+    for (i = list->offset; i < list->fill; i++) {
+        igloo_objecthandler_handle(handler, list->elements[i]);
+    }
+
+    return 0;
 }
 
 igloo_list_iterator_t * igloo_list_iterator_start(igloo_list_t *list, void *storage, size_t storage_length)
