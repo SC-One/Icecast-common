@@ -30,16 +30,7 @@ extern "C" {
 /* Put stuff here */
 
 #include <igloo/config.h>
-
-#ifdef IGLOO_CTC_HAVE_STDINT_H
-#include <stdint.h>
-#endif
-
-#ifdef IGLOO_CTC_HAVE_STDINT_H
-typedef int_least16_t igloo_error_t;
-#else
-typedef long int igloo_error_t;
-#endif
+#include <igloo/types.h>
 
 typedef struct {
     igloo_error_t error;

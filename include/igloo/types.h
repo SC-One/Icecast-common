@@ -29,6 +29,11 @@ extern "C" {
 /* For size_t and ssize_t */
 #include <sys/types.h>
 
+/* for {,u}int_{,least}{8,16,32,64}_t */
+#ifdef IGLOO_CTC_HAVE_STDINT_H
+#include <stdint.h>
+#endif
+
 #include <igloo/config.h>
 
 /* Included in case is not yet included */
@@ -51,6 +56,13 @@ typedef struct igloo_reportxml_database_tag igloo_reportxml_database_t;
 
 typedef struct igloo_ro_base_tag igloo_ro_base_t;
 igloo_RO_FORWARD_TYPE(igloo_ro_base_t);
+
+/* For error.h */
+#ifdef IGLOO_CTC_HAVE_STDINT_H
+typedef int_least16_t igloo_error_t;
+#else
+typedef long int igloo_error_t;
+#endif
 
 #ifdef IGLOO_CTC_HAVE_TYPE_ATTRIBUTE_TRANSPARENT_UNION
 typedef union __attribute__ ((__transparent_union__)) {
