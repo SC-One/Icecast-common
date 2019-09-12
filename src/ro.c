@@ -387,8 +387,23 @@ igloo_ro_t igloo_ro_get_interface(igloo_ro_t self, const igloo_ro_type_t *type, 
         igloo_thread_mutex_unlock(&(base->lock));
         return igloo_RO_NULL;
     }
+    /* create a temp reference
+     * This is required so we can run type_get_interfacecb() in unlocked state.
+     */
+    base->refc++;
+    igloo_thread_mutex_unlock(&(base->lock));
+
     if (base->type->type_get_interfacecb)
         ret = base->type->type_get_interfacecb(self, type, name, associated);
+
+    igloo_thread_mutex_lock(&(base->lock));
+    /* remove temp reference
+     * If refc == 0 the application has a bug.
+     * TODO: We must tell someone about it.
+     * Anyway, we can not just set refc = -1, that will just break things more.
+     */
+    if (base->refc)
+        base->refc--;
     igloo_thread_mutex_unlock(&(base->lock));
 
     return ret;
