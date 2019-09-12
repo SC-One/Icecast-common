@@ -194,6 +194,10 @@ typedef enum {
  */
 typedef igloo_ro_cr_t (*igloo_ro_compare_t)(igloo_ro_t a, igloo_ro_t b);
 
+/* Type used for callback called when error value is requested from an object.
+ */
+typedef igloo_error_t (*igloo_ro_get_error_t)(igloo_ro_t self, igloo_error_t *result);
+
 /* Meta type used to defined types.
  * DO NOT use any of the members in here directly!
  */
@@ -232,6 +236,8 @@ struct igloo_ro_type_tag {
     igloo_ro_stringify_t        type_stringifycb;
     /* Callback to be called by igloo_ro_compare() */
     igloo_ro_compare_t          type_comparecb;
+    /* Callback to be called by igloo_ro_get_error() */
+    igloo_ro_get_error_t        type_get_errorcb;
 };
 struct igloo_ro_base_tag {
     /* Type of the object */
@@ -391,6 +397,19 @@ char *          igloo_ro_stringify(igloo_ro_t self, igloo_ro_sy_t flags);
  *  Thre result of the compare. See igloo_ro_cr_t.
  */
 igloo_ro_cr_t   igloo_ro_compare(igloo_ro_t a, igloo_ro_t b);
+
+/* Get error value from a object.
+ *
+ * Parameters:
+ *  self
+ *      The Object to request error value from.
+ *  result
+ *      Pointer to the location the error value should be stored.
+ *      The value is only written if igloo_ERROR_NONE is returned.
+ * Returns:
+ *  The result of the query.
+ */
+igloo_error_t igloo_ro_get_error(igloo_ro_t self, igloo_error_t *result);
 
 #ifdef __cplusplus
 }

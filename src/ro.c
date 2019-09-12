@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include <igloo/ro.h>
+#include <igloo/error.h>
 #include "private.h"
 
 /* This is not static as it is used by igloo_RO_TYPEDECL_NEW_NOOP() */
@@ -509,6 +510,26 @@ igloo_ro_cr_t   igloo_ro_compare(igloo_ro_t a, igloo_ro_t b)
 
     igloo_thread_mutex_unlock(&(base_b->lock));
     igloo_thread_mutex_unlock(&(base_a->lock));
+
+    return ret;
+}
+
+igloo_error_t igloo_ro_get_error(igloo_ro_t self, igloo_error_t *result)
+{
+    igloo_ro_base_t *base = igloo_RO__GETBASE(self);
+    igloo_error_t ret = igloo_ERROR_GENERIC;
+    igloo_error_t res = igloo_ERROR_GENERIC;
+
+    if (!base || !result)
+        return igloo_ERROR_GENERIC;
+
+    igloo_thread_mutex_lock(&(base->lock));
+    if (base->type->type_get_errorcb)
+        ret = base->type->type_get_errorcb(self, &res);
+    igloo_thread_mutex_unlock(&(base->lock));
+
+    if (ret == igloo_ERROR_NONE)
+        *result = res;
 
     return ret;
 }
