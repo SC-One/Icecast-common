@@ -47,6 +47,9 @@ ctest_list_test_LDADD = libice_ctest.la \
 			avl/libiceavl.la \
 			src/ro.o \
 			src/private.o \
+			src/objecthandler.o \
+			src/filter.o \
+			src/interface.o \
 			src/list.o
 check_PROGRAMS += ctest_list.test
 
