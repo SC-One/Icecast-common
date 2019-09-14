@@ -312,6 +312,9 @@ const char *    igloo_ro_get_name(igloo_ro_t self);
 igloo_ro_t      igloo_ro_get_associated(igloo_ro_t self);
 igloo_error_t   igloo_ro_set_associated(igloo_ro_t self, igloo_ro_t associated);
 
+/* This gets the object's instance object. */
+igloo_ro_t      igloo_ro_get_instance(igloo_ro_t self);
+
 /* Clone the given object returning a copy of it.
  *
  * This creates a copy of the passed object if possible.

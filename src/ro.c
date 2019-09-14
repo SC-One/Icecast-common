@@ -314,6 +314,31 @@ igloo_error_t igloo_ro_set_associated(igloo_ro_t self, igloo_ro_t associated)
     return igloo_ERROR_NONE;
 }
 
+igloo_ro_t      igloo_ro_get_instance(igloo_ro_t self)
+{
+    igloo_ro_base_t *base = igloo_RO__GETBASE(self);
+    igloo_ro_t ret;
+
+    if (!base)
+        return igloo_RO_NULL;
+
+    igloo_thread_mutex_lock(&(base->lock));
+    if (!base->refc) {
+        igloo_thread_mutex_unlock(&(base->lock));
+        return igloo_RO_NULL;
+    }
+    ret = base->instance;
+    if (!igloo_RO_IS_NULL(ret)) {
+        if (igloo_ro_ref(ret) != igloo_ERROR_NONE) {
+            igloo_thread_mutex_unlock(&(base->lock));
+            return igloo_RO_NULL;
+        }
+    }
+    igloo_thread_mutex_unlock(&(base->lock));
+
+    return ret;
+}
+
 igloo_ro_t      igloo_ro_clone(igloo_ro_t self, igloo_ro_cf_t required, igloo_ro_cf_t allowed, const char *name, igloo_ro_t associated)
 {
     igloo_ro_base_t *base = igloo_RO__GETBASE(self);
