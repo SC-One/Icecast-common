@@ -28,6 +28,7 @@ pkginclude_HEADERS = \
     include/igloo/logmsg.h \
     include/igloo/buffer.h \
     include/igloo/list.h \
+    include/igloo/error.h \
     include/igloo/reportxml.h
 
 libigloo_la_SOURCES = \
@@ -42,6 +43,7 @@ libigloo_la_SOURCES = \
     src/logmsg.c \
     src/buffer.c \
     src/list.c \
+    src/error.c \
     src/reportxml.c \
     src/timing.c
 libigloo_la_LIBADD = \
