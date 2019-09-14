@@ -198,6 +198,7 @@ igloo_error_t igloo_ro_unref(igloo_ro_t self)
     base->refc--;
 
     igloo_ro_unref(base->associated);
+    igloo_ro_unref(base->instance);
 
     if (base->name)
         free(base->name);
@@ -205,6 +206,7 @@ igloo_error_t igloo_ro_unref(igloo_ro_t self)
     if (base->wrefc) {
         /* only clear the object */
         base->associated = igloo_RO_NULL;
+        base->instance = igloo_RO_NULL;
         base->name = NULL;
         igloo_thread_mutex_unlock(&(base->lock));
     } else {
