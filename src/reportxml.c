@@ -274,7 +274,7 @@ static igloo_reportxml_t *    reportxml_new_with_root(igloo_reportxml_node_t *ro
     if (!root)
         return NULL;
 
-    ret = igloo_ro_new_raw(igloo_reportxml_t, NULL, igloo_RO_NULL);
+    ret = igloo_ro_new_raw(igloo_reportxml_t, NULL, igloo_RO_NULL, root);
     if (!ret)
         return NULL;
 
@@ -393,7 +393,7 @@ igloo_reportxml_node_t *      igloo_reportxml_node_new(igloo_reportxml_node_type
     if (!nodedef)
         return NULL;
 
-    ret = igloo_ro_new_raw(igloo_reportxml_node_t, NULL, igloo_RO_NULL);
+    ret = igloo_ro_new_raw(igloo_reportxml_node_t, NULL, igloo_RO_NULL, igloo_RO_NULL);
 
     if (ret == NULL)
         return NULL;

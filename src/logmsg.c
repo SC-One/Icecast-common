@@ -54,7 +54,7 @@ igloo_RO_PUBLIC_TYPE(igloo_logmsg_t,
         );
 
 
-igloo_logmsg_t * igloo_logmsg_new(const char *name, igloo_ro_t associated,
+igloo_logmsg_t * igloo_logmsg_new(const char *name, igloo_ro_t associated, igloo_ro_t instance,
                                   const char *msgid,
                                   const char *cat,
                                   const char *func, const char *codefile, const ssize_t codeline,
@@ -63,7 +63,7 @@ igloo_logmsg_t * igloo_logmsg_new(const char *name, igloo_ro_t associated,
                                   igloo_list_t *referenced,
                                   const char *format, ...)
 {
-    igloo_logmsg_t *logmsg = igloo_ro_new_raw(igloo_logmsg_t, name, associated);
+    igloo_logmsg_t *logmsg = igloo_ro_new_raw(igloo_logmsg_t, name, associated, instance);
     va_list ap;
     char string[LOG_MAXLINELEN];
 

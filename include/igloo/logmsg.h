@@ -105,7 +105,7 @@ typedef unsigned long int igloo_logmsg_opt_t;
  *  ...
  *      Parameters according to the format string.
  */
-igloo_logmsg_t * igloo_logmsg_new(const char *name, igloo_ro_t associated, const char *msgid, const char *cat, const char *func, const char *codefile, const ssize_t codeline, const struct timespec * ts, igloo_loglevel_t level, igloo_logmsg_opt_t options, igloo_list_t *referenced, const char *format, ...);
+igloo_logmsg_t * igloo_logmsg_new(const char *name, igloo_ro_t associated, igloo_ro_t instance, const char *msgid, const char *cat, const char *func, const char *codefile, const ssize_t codeline, const struct timespec * ts, igloo_loglevel_t level, igloo_logmsg_opt_t options, igloo_list_t *referenced, const char *format, ...);
 
 /* Get the context from a log message object.
  *

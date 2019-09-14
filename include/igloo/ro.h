@@ -288,7 +288,7 @@ int             igloo_RO_HAS_TYPE_raw(igloo_ro_t object, const igloo_ro_type_t *
  */
 
 igloo_ro_t      igloo_ro_new__raw(const igloo_ro_type_t *type, const char *name, igloo_ro_t associated, igloo_ro_t instance);
-#define         igloo_ro_new_raw(type, name, associated)  igloo_RO_TO_TYPE(igloo_ro_new__raw(igloo_RO_GET_TYPE_BY_SYMBOL(type), (name), (associated), igloo_RO_NULL), type)
+#define         igloo_ro_new_raw(type, name, associated, instance)  igloo_RO_TO_TYPE(igloo_ro_new__raw(igloo_RO_GET_TYPE_BY_SYMBOL(type), (name), (associated), (instance)), type)
 
 igloo_ro_t      igloo_ro_new__simple(const igloo_ro_type_t *type, const char *name, igloo_ro_t associated, igloo_ro_t instance, ...);
 #define         igloo_ro_new(type, ...)                         igloo_RO_TO_TYPE(igloo_ro_new__simple(igloo_RO_GET_TYPE_BY_SYMBOL(type), NULL, igloo_RO_NULL, igloo_RO_NULL, ## __VA_ARGS__), type)

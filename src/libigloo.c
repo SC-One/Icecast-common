@@ -69,7 +69,7 @@ igloo_ro_t     igloo_initialize(void)
 
     snprintf(name, sizeof(name), "<libigloo instance %zu>", igloo_initialize__refc);
 
-    ret = igloo_ro_new_raw(igloo_instance_t, name, igloo_RO_NULL);
+    ret = igloo_ro_new_raw(igloo_instance_t, name, igloo_RO_NULL, igloo_RO_NULL);
     if (!ret)
         return igloo_RO_NULL;
 
