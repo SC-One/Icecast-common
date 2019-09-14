@@ -159,24 +159,24 @@ static inline void igloo_ro__destory(igloo_ro_base_t *base)
     free(base);
 }
 
-int             igloo_ro_unref(igloo_ro_t self)
+igloo_error_t igloo_ro_unref(igloo_ro_t self)
 {
     igloo_ro_base_t *base = igloo_RO__GETBASE(self);
 
     if (!base)
-        return -1;
+        return igloo_ERROR_FAULT;
 
     igloo_thread_mutex_lock(&(base->lock));
 
     if (!base->refc) {
         igloo_thread_mutex_unlock(&(base->lock));
-        return -1;
+        return igloo_ERROR_GENERIC;
     }
 
     if (base->refc > 1) {
         base->refc--;
         igloo_thread_mutex_unlock(&(base->lock));
-        return 0;
+        return igloo_ERROR_NONE;
     }
 
     if (base->type->type_freecb)
@@ -198,7 +198,7 @@ int             igloo_ro_unref(igloo_ro_t self)
         igloo_ro__destory(base);
     }
 
-    return 0;
+    return igloo_ERROR_NONE;
 }
 
 igloo_error_t igloo_ro_weak_ref(igloo_ro_t self)

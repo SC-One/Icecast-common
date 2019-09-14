@@ -16,6 +16,7 @@
 
 #include <igloo/ro.h>
 #include <igloo/buffer.h>
+#include <igloo/error.h>
 
 static void test_create_ref_unref(void)
 {
@@ -23,11 +24,11 @@ static void test_create_ref_unref(void)
 
     a = igloo_buffer_new(-1, NULL, igloo_RO_NULL);
     ctest_test("buffer created", a != NULL);
-    ctest_test("un-referenced", igloo_ro_unref(a) == 0);
+    ctest_test("un-referenced", igloo_ro_unref(a) == igloo_ERROR_NONE);
 
     a = igloo_ro_new(igloo_buffer_t);
     ctest_test("buffer created", a != NULL);
-    ctest_test("un-referenced", igloo_ro_unref(a) == 0);
+    ctest_test("un-referenced", igloo_ro_unref(a) == igloo_ERROR_NONE);
 
 }
 
@@ -44,7 +45,7 @@ static void test_name(void)
     ctest_test("get name", ret != NULL);
     ctest_test("name match", strcmp(name, ret) == 0);
 
-    ctest_test("un-referenced", igloo_ro_unref(a) == 0);
+    ctest_test("un-referenced", igloo_ro_unref(a) == igloo_ERROR_NONE);
 }
 
 static void test_associated(void)
@@ -59,8 +60,8 @@ static void test_associated(void)
     b = igloo_buffer_new(-1, NULL, a);
     ctest_test("buffer created with associated", !igloo_RO_IS_NULL(b));
 
-    ctest_test("un-referenced (1 of 2)", igloo_ro_unref(b) == 0);
-    ctest_test("un-referenced (2 of 2)", igloo_ro_unref(a) == 0);
+    ctest_test("un-referenced (1 of 2)", igloo_ro_unref(b) == igloo_ERROR_NONE);
+    ctest_test("un-referenced (2 of 2)", igloo_ro_unref(a) == igloo_ERROR_NONE);
 }
 
 static void test_empty(void)
@@ -104,7 +105,7 @@ static void test_empty(void)
         }
     }
 
-    ctest_test("un-referenced", igloo_ro_unref(a) == 0);
+    ctest_test("un-referenced", igloo_ro_unref(a) == igloo_ERROR_NONE);
 }
 
 static void test_string(void)
@@ -139,7 +140,7 @@ static void test_string(void)
         }
     }
 
-    ctest_test("un-referenced", igloo_ro_unref(a) == 0);
+    ctest_test("un-referenced", igloo_ro_unref(a) == igloo_ERROR_NONE);
 }
 
 static void test_binary(void)
@@ -183,7 +184,7 @@ static void test_binary(void)
     }
 
 
-    ctest_test("un-referenced", igloo_ro_unref(a) == 0);
+    ctest_test("un-referenced", igloo_ro_unref(a) == igloo_ERROR_NONE);
 }
 
 static void test__compare_to_string(igloo_buffer_t *a, const char *testname, const char *pattern)
@@ -222,7 +223,7 @@ static void test_shift(void)
     test__compare_to_string(a, "string matches shifted input", pattern + 2 + 3 + 2);
     ctest_test("shifted data beyond end (42 bytes)", igloo_buffer_shift(a, 42) != 0);
 
-    ctest_test("un-referenced", igloo_ro_unref(a) == 0);
+    ctest_test("un-referenced", igloo_ro_unref(a) == igloo_ERROR_NONE);
 }
 
 static void test_length(void)
@@ -247,7 +248,7 @@ static void test_length(void)
     ctest_test("Set length to match pattern a (again)", igloo_buffer_set_length(a, strlen(match_a)) != 0);
     test__compare_to_string(a, "string still matches pattern c", match_c);
 
-    ctest_test("un-referenced", igloo_ro_unref(a) == 0);
+    ctest_test("un-referenced", igloo_ro_unref(a) == igloo_ERROR_NONE);
 }
 
 static void test_printf(void)
@@ -269,7 +270,7 @@ static void test_printf(void)
     ctest_test("Set length to match pattern a", igloo_buffer_push_printf(a, "?%+5i?", -num) == 0);
     test__compare_to_string(a, "string matches pattern c", match_c);
 
-    ctest_test("un-referenced", igloo_ro_unref(a) == 0);
+    ctest_test("un-referenced", igloo_ro_unref(a) == igloo_ERROR_NONE);
 }
 
 static void test_push_buffer(void)
@@ -293,8 +294,8 @@ static void test_push_buffer(void)
     ctest_test("pushed buffer a to b", igloo_buffer_push_buffer(b, a) == 0);
     test__compare_to_string(b, "string matches pattern a", match_a);
 
-    ctest_test("un-referenced b", igloo_ro_unref(b) == 0);
-    ctest_test("un-referenced a", igloo_ro_unref(a) == 0);
+    ctest_test("un-referenced b", igloo_ro_unref(b) == igloo_ERROR_NONE);
+    ctest_test("un-referenced a", igloo_ro_unref(a) == igloo_ERROR_NONE);
 }
 
 int main (void)

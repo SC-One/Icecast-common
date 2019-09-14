@@ -299,7 +299,7 @@ int             igloo_ro_ref(igloo_ro_t self);
 /* This decreases the reference counter of the object.
  * If the object's reference counter reaches zero the object is freed.
  */
-int             igloo_ro_unref(igloo_ro_t self);
+igloo_error_t   igloo_ro_unref(igloo_ro_t self);
 
 /* This is the same as igloo_ro_ref() and igloo_ro_unref() but increases/decreases the weak reference counter. */
 igloo_error_t   igloo_ro_weak_ref(igloo_ro_t self);

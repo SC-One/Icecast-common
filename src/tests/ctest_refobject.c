@@ -33,6 +33,7 @@ typedef struct ctest_test_type_d_t ctest_test_type_d_t;
     igloo_RO_TYPE(ctest_test_type_d_t)
 
 #include <igloo/ro.h>
+#include <igloo/error.h>
 
 struct ctest_test_type_t {
     igloo_ro_base_t __base;
@@ -100,8 +101,8 @@ static void test_create_ref_unref(void)
     ctest_test("refobject created", !igloo_RO_IS_NULL(a));
 
     ctest_test("referenced", igloo_ro_ref(a) == 0);
-    ctest_test("un-referenced (1 of 2)", igloo_ro_unref(a) == 0);
-    ctest_test("un-referenced (2 of 2)", igloo_ro_unref(a) == 0);
+    ctest_test("un-referenced (1 of 2)", igloo_ro_unref(a) == igloo_ERROR_NONE);
+    ctest_test("un-referenced (2 of 2)", igloo_ro_unref(a) == igloo_ERROR_NONE);
 }
 
 static void test_create_weak_ref_unref(void)
@@ -112,9 +113,9 @@ static void test_create_weak_ref_unref(void)
     ctest_test("refobject created", !igloo_RO_IS_NULL(a));
 
     ctest_test("weak referenced", igloo_ro_weak_ref(a) == 0);
-    ctest_test("un-referenced (1 of 2)", igloo_ro_unref(a) == 0);
+    ctest_test("un-referenced (1 of 2)", igloo_ro_unref(a) == igloo_ERROR_NONE);
     ctest_test("referencing failed", igloo_ro_ref(a) != 0);
-    ctest_test("un-referencing (2 of 2) failed", igloo_ro_unref(a) != 0);
+    ctest_test("un-referencing (2 of 2) failed", igloo_ro_unref(a) != igloo_ERROR_NONE);
     ctest_test("weak un-referenced", igloo_ro_weak_unref(a) == 0);
 }
 
@@ -130,7 +131,7 @@ static void test_typename(void)
     ctest_test("got typename", typename != NULL);
     ctest_test("typename matches", strcmp(typename, "igloo_ro_base_t") == 0);
 
-    ctest_test("un-referenced", igloo_ro_unref(a) == 0);
+    ctest_test("un-referenced", igloo_ro_unref(a) == igloo_ERROR_NONE);
 }
 
 static void test_valid(void)
@@ -145,7 +146,7 @@ static void test_valid(void)
     ctest_test("is valid", igloo_RO_IS_VALID(a, igloo_ro_base_t));
     ctest_test("is valid as diffrent type", !igloo_RO_IS_VALID(a, ctest_test_type_t));
 
-    ctest_test("un-referenced", igloo_ro_unref(a) == 0);
+    ctest_test("un-referenced", igloo_ro_unref(a) == igloo_ERROR_NONE);
 }
 
 static void test_sizes(void)
@@ -154,22 +155,22 @@ static void test_sizes(void)
 
     a = (igloo_ro_t)igloo_ro_new(ctest_test_type_a_t);
     ctest_test("refobject created with size=sizeof(igloo_ro_base_t) + 1024", !igloo_RO_IS_NULL(a));
-    ctest_test("un-referenced", igloo_ro_unref(a) == 0);
+    ctest_test("un-referenced", igloo_ro_unref(a) == igloo_ERROR_NONE);
 
     a = (igloo_ro_t)igloo_ro_new(ctest_test_type_b_t);
     ctest_test("refobject created with size=sizeof(igloo_ro_base_t) + 131072", !igloo_RO_IS_NULL(a));
-    ctest_test("un-referenced", igloo_ro_unref(a) == 0);
+    ctest_test("un-referenced", igloo_ro_unref(a) == igloo_ERROR_NONE);
 
     a = (igloo_ro_t)igloo_ro_new(ctest_test_type_c_t);
     ctest_test("refobject created with size=sizeof(igloo_ro_base_t) - 1", igloo_RO_IS_NULL(a));
     if (!igloo_RO_IS_NULL(a)) {
-        ctest_test("un-referenced", igloo_ro_unref(a) == 0);
+        ctest_test("un-referenced", igloo_ro_unref(a) == igloo_ERROR_NONE);
     }
 
     a = (igloo_ro_t)igloo_ro_new(ctest_test_type_d_t);
     ctest_test("refobject created with size=0", igloo_RO_IS_NULL(a));
     if (!igloo_RO_IS_NULL(a)) {
-        ctest_test("un-referenced", igloo_ro_unref(a) == 0);
+        ctest_test("un-referenced", igloo_ro_unref(a) == igloo_ERROR_NONE);
     }
 }
 
@@ -186,7 +187,7 @@ static void test_name(void)
     ctest_test("get name", ret != NULL);
     ctest_test("name match", strcmp(name, ret) == 0);
 
-    ctest_test("un-referenced", igloo_ro_unref(a) == 0);
+    ctest_test("un-referenced", igloo_ro_unref(a) == igloo_ERROR_NONE);
 }
 
 static void test_associated(void)
@@ -199,8 +200,8 @@ static void test_associated(void)
     b = igloo_ro_new_ext(igloo_ro_base_t, NULL, a);
     ctest_test("refobject created with associated", !igloo_RO_IS_NULL(b));
 
-    ctest_test("un-referenced (1 of 2)", igloo_ro_unref(b) == 0);
-    ctest_test("un-referenced (2 of 2)", igloo_ro_unref(a) == 0);
+    ctest_test("un-referenced (1 of 2)", igloo_ro_unref(b) == igloo_ERROR_NONE);
+    ctest_test("un-referenced (2 of 2)", igloo_ro_unref(a) == igloo_ERROR_NONE);
 }
 
 static size_t test_freecb__called;
@@ -216,7 +217,7 @@ static void test_freecb(void)
     test_freecb__called = 0;
     a = igloo_ro_new(ctest_test_type_free_t);
     ctest_test("refobject created", a != NULL);
-    ctest_test("un-referenced", igloo_ro_unref(a) == 0);
+    ctest_test("un-referenced", igloo_ro_unref(a) == igloo_ERROR_NONE);
     ctest_test("freecb called", test_freecb__called == 1);
 
     test_freecb__called = 0;
@@ -224,9 +225,9 @@ static void test_freecb(void)
     ctest_test("refobject created", a != NULL);
     ctest_test("referenced", igloo_ro_ref(a) == 0);
     ctest_test("freecb uncalled", test_freecb__called == 0);
-    ctest_test("un-referenced (1 of 2)", igloo_ro_unref(a) == 0);
+    ctest_test("un-referenced (1 of 2)", igloo_ro_unref(a) == igloo_ERROR_NONE);
     ctest_test("freecb uncalled", test_freecb__called == 0);
-    ctest_test("un-referenced (2 of 2)", igloo_ro_unref(a) == 0);
+    ctest_test("un-referenced (2 of 2)", igloo_ro_unref(a) == igloo_ERROR_NONE);
     ctest_test("freecb called", test_freecb__called == 1);
 
     test_freecb__called = 0;
@@ -234,7 +235,7 @@ static void test_freecb(void)
     ctest_test("refobject created", a != NULL);
     ctest_test("weak referenced", igloo_ro_weak_ref(a) == 0);
     ctest_test("freecb uncalled", test_freecb__called == 0);
-    ctest_test("un-referenced", igloo_ro_unref(a) == 0);
+    ctest_test("un-referenced", igloo_ro_unref(a) == igloo_ERROR_NONE);
     ctest_test("freecb called", test_freecb__called == 1);
     ctest_test("weak un-referenced", igloo_ro_weak_unref(a) == 0);
     ctest_test("freecb called once", test_freecb__called == 1);

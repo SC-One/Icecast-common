@@ -16,6 +16,7 @@
 
 #include <igloo/ro.h>
 #include <igloo/list.h>
+#include <igloo/error.h>
 
 static void test_create_ref_unref(void)
 {
@@ -24,7 +25,7 @@ static void test_create_ref_unref(void)
     a = igloo_ro_new(igloo_list_t);
     ctest_test("list created", !igloo_RO_IS_NULL(a));
 
-    ctest_test("un-referenced", igloo_ro_unref(a) == 0);
+    ctest_test("un-referenced", igloo_ro_unref(a) == igloo_ERROR_NONE);
 }
 
 static void test__create_push_unshift(igloo_list_t **list, igloo_ro_base_t **a, igloo_ro_base_t **b)
@@ -55,9 +56,9 @@ static void test_list_push_unshift(void)
 
     test__create_push_unshift(&list, &a, &b);
 
-    ctest_test("un-referenced a", igloo_ro_unref(a) == 0);
-    ctest_test("un-referenced b", igloo_ro_unref(b) == 0);
-    ctest_test("un-referenced list", igloo_ro_unref(list) == 0);
+    ctest_test("un-referenced a", igloo_ro_unref(a) == igloo_ERROR_NONE);
+    ctest_test("un-referenced b", igloo_ro_unref(b) == igloo_ERROR_NONE);
+    ctest_test("un-referenced list", igloo_ro_unref(list) == igloo_ERROR_NONE);
 }
 
 static void test_list_push_unshift_pop(void)
@@ -72,11 +73,11 @@ static void test_list_push_unshift_pop(void)
     ret = igloo_list_pop(list);
     ctest_test("popped element", !igloo_RO_IS_NULL(ret));
     ctest_test("popped element matches a", igloo_RO_TO_TYPE(ret, igloo_ro_base_t) == a);
-    ctest_test("un-referenced popped element", igloo_ro_unref(ret) == 0);
+    ctest_test("un-referenced popped element", igloo_ro_unref(ret) == igloo_ERROR_NONE);
 
-    ctest_test("un-referenced a", igloo_ro_unref(a) == 0);
-    ctest_test("un-referenced b", igloo_ro_unref(b) == 0);
-    ctest_test("un-referenced list", igloo_ro_unref(list) == 0);
+    ctest_test("un-referenced a", igloo_ro_unref(a) == igloo_ERROR_NONE);
+    ctest_test("un-referenced b", igloo_ro_unref(b) == igloo_ERROR_NONE);
+    ctest_test("un-referenced list", igloo_ro_unref(list) == igloo_ERROR_NONE);
 }
 
 static void test_list_push_unshift_pop_pop(void)
@@ -91,20 +92,20 @@ static void test_list_push_unshift_pop_pop(void)
     ret = igloo_list_pop(list);
     ctest_test("popped element", !igloo_RO_IS_NULL(ret));
     ctest_test("popped element matches a", igloo_RO_TO_TYPE(ret, igloo_ro_base_t) == a);
-    ctest_test("un-referenced popped element", igloo_ro_unref(ret) == 0);
+    ctest_test("un-referenced popped element", igloo_ro_unref(ret) == igloo_ERROR_NONE);
 
     ret = igloo_list_pop(list);
     ctest_test("popped element", !igloo_RO_IS_NULL(ret));
     ctest_test("popped element matches b", igloo_RO_TO_TYPE(ret, igloo_ro_base_t) == b);
-    ctest_test("un-referenced popped element", igloo_ro_unref(ret) == 0);
+    ctest_test("un-referenced popped element", igloo_ro_unref(ret) == igloo_ERROR_NONE);
 
     ret = igloo_list_pop(list);
     ctest_test("popped no element", igloo_RO_IS_NULL(ret));
     igloo_ro_unref(ret); /* just in case we got an element */
 
-    ctest_test("un-referenced a", igloo_ro_unref(a) == 0);
-    ctest_test("un-referenced b", igloo_ro_unref(b) == 0);
-    ctest_test("un-referenced list", igloo_ro_unref(list) == 0);
+    ctest_test("un-referenced a", igloo_ro_unref(a) == igloo_ERROR_NONE);
+    ctest_test("un-referenced b", igloo_ro_unref(b) == igloo_ERROR_NONE);
+    ctest_test("un-referenced list", igloo_ro_unref(list) == igloo_ERROR_NONE);
 }
 
 static void test_list_push_unshift_shift(void)
@@ -119,11 +120,11 @@ static void test_list_push_unshift_shift(void)
     ret = igloo_list_shift(list);
     ctest_test("shifted element", !igloo_RO_IS_NULL(ret));
     ctest_test("shifted element matches b", igloo_RO_TO_TYPE(ret, igloo_ro_base_t) == b);
-    ctest_test("un-referenced shifted element", igloo_ro_unref(ret) == 0);
+    ctest_test("un-referenced shifted element", igloo_ro_unref(ret) == igloo_ERROR_NONE);
 
-    ctest_test("un-referenced a", igloo_ro_unref(a) == 0);
-    ctest_test("un-referenced b", igloo_ro_unref(b) == 0);
-    ctest_test("un-referenced list", igloo_ro_unref(list) == 0);
+    ctest_test("un-referenced a", igloo_ro_unref(a) == igloo_ERROR_NONE);
+    ctest_test("un-referenced b", igloo_ro_unref(b) == igloo_ERROR_NONE);
+    ctest_test("un-referenced list", igloo_ro_unref(list) == igloo_ERROR_NONE);
 }
 
 static void test_list_push_unshift_shift_shift(void)
@@ -138,20 +139,20 @@ static void test_list_push_unshift_shift_shift(void)
     ret = igloo_list_shift(list);
     ctest_test("shifted element", !igloo_RO_IS_NULL(ret));
     ctest_test("shifted element matches b", igloo_RO_TO_TYPE(ret, igloo_ro_base_t) == b);
-    ctest_test("un-referenced shifted element", igloo_ro_unref(ret) == 0);
+    ctest_test("un-referenced shifted element", igloo_ro_unref(ret) == igloo_ERROR_NONE);
 
     ret = igloo_list_shift(list);
     ctest_test("shifted element", !igloo_RO_IS_NULL(ret));
     ctest_test("shifted element matches a", igloo_RO_TO_TYPE(ret, igloo_ro_base_t) == a);
-    ctest_test("un-referenced shifted element", igloo_ro_unref(ret) == 0);
+    ctest_test("un-referenced shifted element", igloo_ro_unref(ret) == igloo_ERROR_NONE);
 
     ret = igloo_list_shift(list);
     ctest_test("shifted no element", igloo_RO_IS_NULL(ret));
     igloo_ro_unref(ret); /* just in case we got an element */
 
-    ctest_test("un-referenced a", igloo_ro_unref(a) == 0);
-    ctest_test("un-referenced b", igloo_ro_unref(b) == 0);
-    ctest_test("un-referenced list", igloo_ro_unref(list) == 0);
+    ctest_test("un-referenced a", igloo_ro_unref(a) == igloo_ERROR_NONE);
+    ctest_test("un-referenced b", igloo_ro_unref(b) == igloo_ERROR_NONE);
+    ctest_test("un-referenced list", igloo_ro_unref(list) == igloo_ERROR_NONE);
 }
 
 
@@ -167,16 +168,16 @@ static void test_list_push_unshift_pop_shift(void)
     ret = igloo_list_pop(list);
     ctest_test("popped element", !igloo_RO_IS_NULL(ret));
     ctest_test("popped element matches a", igloo_RO_TO_TYPE(ret, igloo_ro_base_t) == a);
-    ctest_test("un-referenced popped element", igloo_ro_unref(ret) == 0);
+    ctest_test("un-referenced popped element", igloo_ro_unref(ret) == igloo_ERROR_NONE);
 
     ret = igloo_list_shift(list);
     ctest_test("shifted element", !igloo_RO_IS_NULL(ret));
     ctest_test("shifted element matches b", igloo_RO_TO_TYPE(ret, igloo_ro_base_t) == b);
-    ctest_test("un-referenced shifted element", igloo_ro_unref(ret) == 0);
+    ctest_test("un-referenced shifted element", igloo_ro_unref(ret) == igloo_ERROR_NONE);
 
-    ctest_test("un-referenced a", igloo_ro_unref(a) == 0);
-    ctest_test("un-referenced b", igloo_ro_unref(b) == 0);
-    ctest_test("un-referenced list", igloo_ro_unref(list) == 0);
+    ctest_test("un-referenced a", igloo_ro_unref(a) == igloo_ERROR_NONE);
+    ctest_test("un-referenced b", igloo_ro_unref(b) == igloo_ERROR_NONE);
+    ctest_test("un-referenced list", igloo_ro_unref(list) == igloo_ERROR_NONE);
 }
 static void test_list_push_unshift_shift_pop(void)
 {
@@ -190,16 +191,16 @@ static void test_list_push_unshift_shift_pop(void)
     ret = igloo_list_shift(list);
     ctest_test("shifted element", !igloo_RO_IS_NULL(ret));
     ctest_test("shifted element matches b", igloo_RO_TO_TYPE(ret, igloo_ro_base_t) == b);
-    ctest_test("un-referenced shifted element", igloo_ro_unref(ret) == 0);
+    ctest_test("un-referenced shifted element", igloo_ro_unref(ret) == igloo_ERROR_NONE);
 
     ret = igloo_list_pop(list);
     ctest_test("popped element", !igloo_RO_IS_NULL(ret));
     ctest_test("popped element matches a", igloo_RO_TO_TYPE(ret, igloo_ro_base_t) == a);
-    ctest_test("un-referenced popped element", igloo_ro_unref(ret) == 0);
+    ctest_test("un-referenced popped element", igloo_ro_unref(ret) == igloo_ERROR_NONE);
 
-    ctest_test("un-referenced a", igloo_ro_unref(a) == 0);
-    ctest_test("un-referenced b", igloo_ro_unref(b) == 0);
-    ctest_test("un-referenced list", igloo_ro_unref(list) == 0);
+    ctest_test("un-referenced a", igloo_ro_unref(a) == igloo_ERROR_NONE);
+    ctest_test("un-referenced b", igloo_ro_unref(b) == igloo_ERROR_NONE);
+    ctest_test("un-referenced list", igloo_ro_unref(list) == igloo_ERROR_NONE);
 }
 
 static void test_list_merge(void)
@@ -230,12 +231,12 @@ static void test_list_merge(void)
     ret = igloo_list_shift(list_a);
     ctest_test("shifted element", !igloo_RO_IS_NULL(ret));
     ctest_test("shifted element matches a", igloo_RO_TO_TYPE(ret, igloo_ro_base_t) == a);
-    ctest_test("un-referenced shifted element", igloo_ro_unref(ret) == 0);
+    ctest_test("un-referenced shifted element", igloo_ro_unref(ret) == igloo_ERROR_NONE);
 
     ret = igloo_list_shift(list_a);
     ctest_test("shifted element", !igloo_RO_IS_NULL(ret));
     ctest_test("shifted element matches b", igloo_RO_TO_TYPE(ret, igloo_ro_base_t) == b);
-    ctest_test("un-referenced shifted element", igloo_ro_unref(ret) == 0);
+    ctest_test("un-referenced shifted element", igloo_ro_unref(ret) == igloo_ERROR_NONE);
 
     ret = igloo_list_shift(list_a);
     ctest_test("shifted no element", igloo_RO_IS_NULL(ret));
@@ -244,16 +245,16 @@ static void test_list_merge(void)
     ret = igloo_list_shift(list_b);
     ctest_test("shifted element", !igloo_RO_IS_NULL(ret));
     ctest_test("shifted element matches b", igloo_RO_TO_TYPE(ret, igloo_ro_base_t) == b);
-    ctest_test("un-referenced shifted element", igloo_ro_unref(ret) == 0);
+    ctest_test("un-referenced shifted element", igloo_ro_unref(ret) == igloo_ERROR_NONE);
 
     ret = igloo_list_shift(list_b);
     ctest_test("shifted no element", igloo_RO_IS_NULL(ret));
     igloo_ro_unref(ret); /* just in case we got an element */
 
-    ctest_test("un-referenced a", igloo_ro_unref(a) == 0);
-    ctest_test("un-referenced b", igloo_ro_unref(b) == 0);
-    ctest_test("un-referenced list a", igloo_ro_unref(list_a) == 0);
-    ctest_test("un-referenced list b", igloo_ro_unref(list_b) == 0);
+    ctest_test("un-referenced a", igloo_ro_unref(a) == igloo_ERROR_NONE);
+    ctest_test("un-referenced b", igloo_ro_unref(b) == igloo_ERROR_NONE);
+    ctest_test("un-referenced list a", igloo_ro_unref(list_a) == igloo_ERROR_NONE);
+    ctest_test("un-referenced list b", igloo_ro_unref(list_b) == igloo_ERROR_NONE);
 }
 
 static void test_list_set_type(void)
@@ -290,7 +291,7 @@ static void test_list_set_type(void)
     ctest_test("can not pin list to type igloo_list_t", igloo_list_set_type(list, igloo_list_t) == 0);
     ctest_test("pinned list to type igloo_ro_base_t", igloo_list_set_type(list, igloo_ro_base_t) == 0);
 
-    ctest_test("un-referenced list a", igloo_ro_unref(list) == 0);
+    ctest_test("un-referenced list a", igloo_ro_unref(list) == igloo_ERROR_NONE);
     list = igloo_ro_new(igloo_list_t);
     ctest_test("list created", !igloo_RO_IS_NULL(list));
 
@@ -304,15 +305,15 @@ static void test_list_set_type(void)
     ret = igloo_list_shift(list);
     ctest_test("shifted element", !igloo_RO_IS_NULL(ret));
     ctest_test("shifted element matches a", igloo_RO_TO_TYPE(ret, igloo_ro_base_t) == a);
-    ctest_test("un-referenced shifted element", igloo_ro_unref(ret) == 0);
+    ctest_test("un-referenced shifted element", igloo_ro_unref(ret) == igloo_ERROR_NONE);
 
     ctest_test("pinned list to type igloo_ro_base_t", igloo_list_set_type(list, igloo_ro_base_t) != 0);
     ctest_test("can not pin list to type igloo_list_t", igloo_list_set_type(list, igloo_list_t) == 0);
     ctest_test("pinned list to type igloo_ro_base_t", igloo_list_set_type(list, igloo_ro_base_t) != 0);
 
-    ctest_test("un-referenced a", igloo_ro_unref(a) == 0);
-    ctest_test("un-referenced b", igloo_ro_unref(b) == 0);
-    ctest_test("un-referenced list a", igloo_ro_unref(list) == 0);
+    ctest_test("un-referenced a", igloo_ro_unref(a) == igloo_ERROR_NONE);
+    ctest_test("un-referenced b", igloo_ro_unref(b) == igloo_ERROR_NONE);
+    ctest_test("un-referenced list a", igloo_ro_unref(list) == igloo_ERROR_NONE);
 }
 
 static void test_list_iterator(void)
@@ -332,7 +333,7 @@ static void test_list_iterator(void)
         igloo_ro_t ret = igloo_list_iterator_next(iterator);
         ctest_test("shifted element matches corresponding element in list", igloo_RO_TO_TYPE(ret, igloo_ro_base_t) == elements[i]);
         if (!igloo_RO_IS_NULL(ret)) {
-            ctest_test("un-referenced element returned by iterator", igloo_ro_unref(ret) == 0);
+            ctest_test("un-referenced element returned by iterator", igloo_ro_unref(ret) == igloo_ERROR_NONE);
         }
     }
 
@@ -342,7 +343,7 @@ static void test_list_iterator(void)
         igloo_ro_t ret = igloo_list_iterator_next(iterator);
         ctest_test("shifted element matches corresponding element in list", igloo_RO_TO_TYPE(ret, igloo_ro_base_t) == elements[i]);
         if (!igloo_RO_IS_NULL(ret)) {
-            ctest_test("un-referenced element returned by iterator", igloo_ro_unref(ret) == 0);
+            ctest_test("un-referenced element returned by iterator", igloo_ro_unref(ret) == igloo_ERROR_NONE);
         }
     }
 
@@ -352,7 +353,7 @@ static void test_list_iterator(void)
         igloo_ro_t ret = igloo_list_iterator_next(iterator);
         ctest_test("shifted element matches corresponding element in list", igloo_RO_TO_TYPE(ret, igloo_ro_base_t) == elements[i]);
         if (!igloo_RO_IS_NULL(ret)) {
-            ctest_test("un-referenced element returned by iterator", igloo_ro_unref(ret) == 0);
+            ctest_test("un-referenced element returned by iterator", igloo_ro_unref(ret) == igloo_ERROR_NONE);
         }
     }
 
@@ -362,15 +363,15 @@ static void test_list_iterator(void)
         igloo_ro_t ret = igloo_list_iterator_next(iterator);
         ctest_test("shifted element matches corresponding element in list", igloo_RO_TO_TYPE(ret, igloo_ro_base_t) == elements[i]);
         if (!igloo_RO_IS_NULL(ret)) {
-            ctest_test("un-referenced element returned by iterator", igloo_ro_unref(ret) == 0);
+            ctest_test("un-referenced element returned by iterator", igloo_ro_unref(ret) == igloo_ERROR_NONE);
         }
     }
 
     igloo_list_iterator_end(iterator);
 
-    ctest_test("un-referenced a", igloo_ro_unref(elements[0]) == 0);
-    ctest_test("un-referenced b", igloo_ro_unref(elements[1]) == 0);
-    ctest_test("un-referenced list", igloo_ro_unref(list) == 0);
+    ctest_test("un-referenced a", igloo_ro_unref(elements[0]) == igloo_ERROR_NONE);
+    ctest_test("un-referenced b", igloo_ro_unref(elements[1]) == igloo_ERROR_NONE);
+    ctest_test("un-referenced list", igloo_ro_unref(list) == igloo_ERROR_NONE);
 }
 
 static void test_list_foreach(void)
@@ -386,9 +387,9 @@ static void test_list_foreach(void)
         i++;
     });
 
-    ctest_test("un-referenced a", igloo_ro_unref(elements[0]) == 0);
-    ctest_test("un-referenced b", igloo_ro_unref(elements[1]) == 0);
-    ctest_test("un-referenced list", igloo_ro_unref(list) == 0);
+    ctest_test("un-referenced a", igloo_ro_unref(elements[0]) == igloo_ERROR_NONE);
+    ctest_test("un-referenced b", igloo_ro_unref(elements[1]) == igloo_ERROR_NONE);
+    ctest_test("un-referenced list", igloo_ro_unref(list) == igloo_ERROR_NONE);
 }
 
 static void test_list_policy_grow(void) {
@@ -404,10 +405,10 @@ static void test_list_policy_grow(void) {
         igloo_ro_base_t *element = igloo_ro_new(igloo_ro_base_t);
         ctest_test("test object created", !igloo_RO_IS_NULL(element));
         ctest_test("test object pushed", igloo_list_push(list, element) == 0);
-        ctest_test("un-referenced test object", igloo_ro_unref(element) == 0);
+        ctest_test("un-referenced test object", igloo_ro_unref(element) == igloo_ERROR_NONE);
     }
 
-    ctest_test("un-referenced list", igloo_ro_unref(list) == 0);
+    ctest_test("un-referenced list", igloo_ro_unref(list) == igloo_ERROR_NONE);
 }
 
 static void test_list_policy_fixed(void) {
@@ -429,12 +430,12 @@ static void test_list_policy_fixed(void) {
         } else {
             ctest_test("test object can not be pushed", igloo_list_push(list, element) != 0);
         }
-        ctest_test("un-referenced test object", igloo_ro_unref(element) == 0);
+        ctest_test("un-referenced test object", igloo_ro_unref(element) == igloo_ERROR_NONE);
     }
 
     element = igloo_RO_TO_TYPE(igloo_list_shift(list), igloo_ro_base_t);
     ctest_test("shifted element", !igloo_RO_IS_NULL(element));
-    ctest_test("un-referenced element", igloo_ro_unref(element) == 0);
+    ctest_test("un-referenced element", igloo_ro_unref(element) == igloo_ERROR_NONE);
 
     for (i = 0; i < 3; i++) {
         element = igloo_ro_new(igloo_ro_base_t);
@@ -444,10 +445,10 @@ static void test_list_policy_fixed(void) {
         } else {
             ctest_test("test object can not be pushed", igloo_list_push(list, element) != 0);
         }
-        ctest_test("un-referenced test object", igloo_ro_unref(element) == 0);
+        ctest_test("un-referenced test object", igloo_ro_unref(element) == igloo_ERROR_NONE);
     }
 
-    ctest_test("un-referenced list", igloo_ro_unref(list) == 0);
+    ctest_test("un-referenced list", igloo_ro_unref(list) == igloo_ERROR_NONE);
 }
 
 static void test_list_policy_fixed_pipe_push(void) {
@@ -472,16 +473,16 @@ static void test_list_policy_fixed_pipe_push(void) {
             ctest_test("referenced 2nd test object", igloo_ro_ref(second_element) == 0);
         }
 
-        ctest_test("un-referenced test object", igloo_ro_unref(element) == 0);
+        ctest_test("un-referenced test object", igloo_ro_unref(element) == igloo_ERROR_NONE);
     }
 
     element = igloo_RO_TO_TYPE(igloo_list_shift(list), igloo_ro_base_t);
     ctest_test("shifted element", !igloo_RO_IS_NULL(element));
     ctest_test("shifted element matches 2nd test object", igloo_RO_TO_TYPE(element, igloo_ro_base_t) == second_element);
-    ctest_test("un-referenced element", igloo_ro_unref(element) == 0);
+    ctest_test("un-referenced element", igloo_ro_unref(element) == igloo_ERROR_NONE);
 
-    ctest_test("un-referenced 2nd test object", igloo_ro_unref(second_element) == 0);
-    ctest_test("un-referenced list", igloo_ro_unref(list) == 0);
+    ctest_test("un-referenced 2nd test object", igloo_ro_unref(second_element) == igloo_ERROR_NONE);
+    ctest_test("un-referenced list", igloo_ro_unref(list) == igloo_ERROR_NONE);
 }
 
 static void test_list_policy_fixed_pipe_unshift(void) {
@@ -506,16 +507,16 @@ static void test_list_policy_fixed_pipe_unshift(void) {
             ctest_test("referenced 2nd test object", igloo_ro_ref(second_element) == 0);
         }
 
-        ctest_test("un-referenced test object", igloo_ro_unref(element) == 0);
+        ctest_test("un-referenced test object", igloo_ro_unref(element) == igloo_ERROR_NONE);
     }
 
     element = igloo_RO_TO_TYPE(igloo_list_pop(list), igloo_ro_base_t);
     ctest_test("poped element", !igloo_RO_IS_NULL(element));
     ctest_test("poped element matches 2nd test object", igloo_RO_TO_TYPE(element, igloo_ro_base_t) == second_element);
-    ctest_test("un-referenced element", igloo_ro_unref(element) == 0);
+    ctest_test("un-referenced element", igloo_ro_unref(element) == igloo_ERROR_NONE);
 
-    ctest_test("un-referenced 2nd test object", igloo_ro_unref(second_element) == 0);
-    ctest_test("un-referenced list", igloo_ro_unref(list) == 0);
+    ctest_test("un-referenced 2nd test object", igloo_ro_unref(second_element) == igloo_ERROR_NONE);
+    ctest_test("un-referenced list", igloo_ro_unref(list) == igloo_ERROR_NONE);
 }
 
 static void test_list_policy_fixed_pipe_merge(void) {
@@ -536,7 +537,7 @@ static void test_list_policy_fixed_pipe_merge(void) {
         element = igloo_ro_new(igloo_ro_base_t);
         ctest_test("test object created", !igloo_RO_IS_NULL(element));
         ctest_test("test object pushed", igloo_list_push(srclist, element) == 0);
-        ctest_test("un-referenced test object", igloo_ro_unref(element) == 0);
+        ctest_test("un-referenced test object", igloo_ro_unref(element) == igloo_ERROR_NONE);
     }
 
     ctest_test("merged source list into destination list", igloo_list_merge(dstlist, srclist) == 0);
@@ -546,8 +547,8 @@ static void test_list_policy_fixed_pipe_merge(void) {
 
     ctest_test("merged source list into destination list", igloo_list_merge(dstlist, srclist) == 0);
 
-    ctest_test("un-referenced srclist", igloo_ro_unref(srclist) == 0);
-    ctest_test("un-referenced dstlist", igloo_ro_unref(dstlist) == 0);
+    ctest_test("un-referenced srclist", igloo_ro_unref(srclist) == igloo_ERROR_NONE);
+    ctest_test("un-referenced dstlist", igloo_ro_unref(dstlist) == igloo_ERROR_NONE);
 }
 
 static void test_list_remove(void) {
@@ -570,7 +571,7 @@ static void test_list_remove(void) {
             ctest_test("referenced 2nd test object", igloo_ro_ref(second_element) == 0);
         }
 
-        ctest_test("un-referenced test object", igloo_ro_unref(element) == 0);
+        ctest_test("un-referenced test object", igloo_ro_unref(element) == igloo_ERROR_NONE);
     }
 
     ctest_test("2nd element was removed", igloo_list_remove(list, second_element) == 0);
@@ -583,8 +584,8 @@ static void test_list_remove(void) {
 
     ctest_test("Number of returned elements is correct", count == 3);
 
-    ctest_test("un-referenced 2nd test object", igloo_ro_unref(second_element) == 0);
-    ctest_test("un-referenced list", igloo_ro_unref(list) == 0);
+    ctest_test("un-referenced 2nd test object", igloo_ro_unref(second_element) == igloo_ERROR_NONE);
+    ctest_test("un-referenced list", igloo_ro_unref(list) == igloo_ERROR_NONE);
 }
 
 int main (void)

@@ -19,6 +19,7 @@
 #include <igloo/reportxml.h>
 #include <igloo/thread.h>
 #include <igloo/avl.h>
+#include <igloo/error.h>
 
 #define XMLSTR(str) ((xmlChar *)(str))
 
@@ -956,12 +957,17 @@ xmlNodePtr              igloo_reportxml_node_get_xml_child(igloo_reportxml_node_
     return ret;
 }
 
+static int __database_free_key_fun_type(void * key)
+{
+    return igloo_ro_unref(key) == igloo_ERROR_NONE ? 0 : -1;
+}
+
 static void __database_free(igloo_ro_t self)
 {
     igloo_reportxml_database_t *db = igloo_RO_TO_TYPE(self, igloo_reportxml_database_t);
 
     if (db->definitions)
-        igloo_avl_tree_free(db->definitions, (igloo_avl_free_key_fun_type)igloo_ro_unref);
+        igloo_avl_tree_free(db->definitions, __database_free_key_fun_type);
 
     igloo_thread_mutex_destroy(&(db->lock));
 }
