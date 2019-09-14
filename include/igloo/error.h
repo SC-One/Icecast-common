@@ -40,6 +40,10 @@ typedef struct {
     const char *description;
 } igloo_error_desc_t;
 
+/*
+ * NOTE: The following lines bust keep their exact formating as it is used for code generation!
+ */
+
 #define igloo_ERROR_GENERIC         ((igloo_error_t)-1) /* Generic error: A generic error occurred. */
 #define igloo_ERROR_NONE            ((igloo_error_t)0)  /* No error: The operation succeeded. */
 
