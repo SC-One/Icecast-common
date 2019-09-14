@@ -373,7 +373,7 @@ igloo_ro_t      igloo_ro_clone(igloo_ro_t self, igloo_ro_cf_t required, igloo_ro
     return ret;
 }
 
-igloo_ro_t      igloo_ro_convert(igloo_ro_t self, const igloo_ro_type_t *type, igloo_ro_cf_t required, igloo_ro_cf_t allowed, const char *name, igloo_ro_t associated)
+static igloo_ro_t      igloo_ro_convert_ext__no_lock(igloo_ro_t self, const igloo_ro_type_t *type, igloo_ro_cf_t required, igloo_ro_cf_t allowed, const char *name, igloo_ro_t associated)
 {
     igloo_ro_base_t *base = igloo_RO__GETBASE(self);
     igloo_ro_t ret = igloo_RO_NULL;
@@ -381,14 +381,11 @@ igloo_ro_t      igloo_ro_convert(igloo_ro_t self, const igloo_ro_type_t *type, i
     if (!base || !type)
         return igloo_RO_NULL;
 
-    igloo_thread_mutex_lock(&(base->lock));
     if (!base->refc) {
-        igloo_thread_mutex_unlock(&(base->lock));
         return igloo_RO_NULL;
     }
 
     if (base->type == type) {
-        igloo_thread_mutex_unlock(&(base->lock));
         return igloo_ro_clone(self, required, allowed, name, associated);
     }
 
@@ -403,6 +400,35 @@ igloo_ro_t      igloo_ro_convert(igloo_ro_t self, const igloo_ro_type_t *type, i
     if (igloo_RO_IS_NULL(ret))
         if (type->type_convertcb)
             ret = type->type_convertcb(self, type, required, allowed, name, associated, base->instance);
+
+    return ret;
+}
+
+igloo_ro_t      igloo_ro_convert_ext(igloo_ro_t self, const igloo_ro_type_t *type, igloo_ro_cf_t required, igloo_ro_cf_t allowed, const char *name, igloo_ro_t associated)
+{
+    igloo_ro_base_t *base = igloo_RO__GETBASE(self);
+    igloo_ro_t ret;
+
+    if (!base || !type)
+        return igloo_RO_NULL;
+
+    igloo_thread_mutex_lock(&(base->lock));
+	ret = igloo_ro_convert_ext__no_lock(self, type, required, allowed, name, associated);
+    igloo_thread_mutex_unlock(&(base->lock));
+
+    return ret;
+}
+
+igloo_ro_t      igloo_ro_convert_simple(igloo_ro_t self, const igloo_ro_type_t *type, igloo_ro_cf_t required, igloo_ro_cf_t allowed)
+{
+    igloo_ro_base_t *base = igloo_RO__GETBASE(self);
+    igloo_ro_t ret;
+
+    if (!base || !type)
+        return igloo_RO_NULL;
+
+    igloo_thread_mutex_lock(&(base->lock));
+	ret = igloo_ro_convert_ext__no_lock(self, type, required, allowed, base->name, base->associated);
     igloo_thread_mutex_unlock(&(base->lock));
 
     return ret;
