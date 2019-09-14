@@ -356,7 +356,7 @@ igloo_ro_t      igloo_ro_clone(igloo_ro_t self, igloo_ro_cf_t required, igloo_ro
  */
 igloo_ro_t      igloo_ro_convert_ext(igloo_ro_t self, const igloo_ro_type_t *type, igloo_ro_cf_t required, igloo_ro_cf_t allowed, const char *name, igloo_ro_t associated);
 igloo_ro_t      igloo_ro_convert_simple(igloo_ro_t self, const igloo_ro_type_t *type, igloo_ro_cf_t required, igloo_ro_cf_t allowed);
-#define         igloo_ro_convert(self, type) igloo_RO_TO_TYPE(igloo_ro_convert_simple((self), igloo_RO_GET_TYPE_BY_SYMBOL(type), igloo_RO_CF_NONE, igloo_RO_CF_DEFAULT), type)
+#define         igloo_ro_convert(self, type) igloo_RO_TO_TYPE(igloo_ro_convert_simple((self), igloo_RO_GET_TYPE_BY_SYMBOL(type), igloo_RO_CF_NONE, igloo_RO_CF_NONE), type)
 
 /* Request a specific interface from the object.
  *
