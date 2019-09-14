@@ -44,9 +44,9 @@ igloo_RO_PUBLIC_TYPE(igloo_objecthandler_t,
         igloo_RO_TYPEDECL_FREE(__free)
         );
 
-igloo_objecthandler_t * igloo_objecthandler_new(const igloo_objecthandler_ifdesc_t *ifdesc, igloo_ro_t backend_object, void *backend_userdata, const char *name, igloo_ro_t associated)
+igloo_objecthandler_t * igloo_objecthandler_new(const igloo_objecthandler_ifdesc_t *ifdesc, igloo_ro_t backend_object, void *backend_userdata, const char *name, igloo_ro_t associated, igloo_ro_t instance)
 {
-    igloo_objecthandler_t *handler = igloo_interface_base_new(igloo_objecthandler_t, ifdesc, backend_object, backend_userdata, name, associated);
+    igloo_objecthandler_t *handler = igloo_interface_base_new(igloo_objecthandler_t, ifdesc, backend_object, backend_userdata, name, associated, instance);
 
     if (!handler)
         return NULL;

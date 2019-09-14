@@ -270,7 +270,7 @@ static const igloo_objecthandler_ifdesc_t igloo_logmsg_formarter_ifdesc = {
     .set_backend = __set_backend
 };
 
-igloo_objecthandler_t   * igloo_logmsg_formarter(igloo_ro_t backend, const char *subformat, const char *name, igloo_ro_t associated)
+igloo_objecthandler_t   * igloo_logmsg_formarter(igloo_ro_t backend, const char *subformat, const char *name, igloo_ro_t associated, igloo_ro_t instance)
 {
     igloo_logmsg_formarter_subtype_t *sf = NULL;
     igloo_objecthandler_t *objecthandler;
@@ -293,7 +293,7 @@ igloo_objecthandler_t   * igloo_logmsg_formarter(igloo_ro_t backend, const char 
         return NULL;
     }
 
-    objecthandler = igloo_objecthandler_new(&igloo_logmsg_formarter_ifdesc, NULL, sf, name, associated);
+    objecthandler = igloo_objecthandler_new(&igloo_logmsg_formarter_ifdesc, NULL, sf, name, associated, instance);
     if (!objecthandler) {
         free(sf);
     }
@@ -354,7 +354,7 @@ static const igloo_filter_ifdesc_t igloo_logmsg_filter_ifdesc = {
     .test = __test
 };
 
-igloo_filter_t          * igloo_logmsg_filter(igloo_loglevel_t level_min, igloo_loglevel_t level_max, igloo_logmsg_opt_t options_required, igloo_logmsg_opt_t options_absent, const struct timespec * ts_min, const struct timespec * ts_max, const char *cat, const char *name, igloo_ro_t associated)
+igloo_filter_t          * igloo_logmsg_filter(igloo_loglevel_t level_min, igloo_loglevel_t level_max, igloo_logmsg_opt_t options_required, igloo_logmsg_opt_t options_absent, const struct timespec * ts_min, const struct timespec * ts_max, const char *cat, const char *name, igloo_ro_t associated, igloo_ro_t instance)
 {
     igloo_filter_t *filter;
     igloo_logmsg_filter_mask_t *mask = calloc(1, sizeof(*mask));
@@ -386,7 +386,7 @@ igloo_filter_t          * igloo_logmsg_filter(igloo_loglevel_t level_min, igloo_
         }
     }
 
-    filter = igloo_filter_new(&igloo_logmsg_filter_ifdesc, igloo_RO_NULL, mask, name, associated);
+    filter = igloo_filter_new(&igloo_logmsg_filter_ifdesc, igloo_RO_NULL, mask, name, associated, instance);
     if (!filter) {
         free(mask);
     }

@@ -164,7 +164,7 @@ int igloo_logmsg_get_extra(igloo_logmsg_t *msg, igloo_logmsg_opt_t *options, igl
  *  name, associated
  *      See refobject_new().
  */
-igloo_objecthandler_t 	* igloo_logmsg_formarter(igloo_ro_t backend, const char *subformat, const char *name, igloo_ro_t associated);
+igloo_objecthandler_t 	* igloo_logmsg_formarter(igloo_ro_t backend, const char *subformat, const char *name, igloo_ro_t associated, igloo_ro_t instance);
 
 /* This creates a filter for log messages.
  * Parameters:
@@ -185,7 +185,7 @@ igloo_objecthandler_t 	* igloo_logmsg_formarter(igloo_ro_t backend, const char *
  *  name, associated
  *      See refobject_new().
  */
-igloo_filter_t 		* igloo_logmsg_filter(igloo_loglevel_t level_min, igloo_loglevel_t level_max, igloo_logmsg_opt_t options_required, igloo_logmsg_opt_t options_absent, const struct timespec * ts_min, const struct timespec * ts_max, const char *cat, const char *name, igloo_ro_t associated);
+igloo_filter_t 		* igloo_logmsg_filter(igloo_loglevel_t level_min, igloo_loglevel_t level_max, igloo_logmsg_opt_t options_required, igloo_logmsg_opt_t options_absent, const struct timespec * ts_min, const struct timespec * ts_max, const char *cat, const char *name, igloo_ro_t associated, igloo_ro_t instance);
 
 #ifdef __cplusplus
 }

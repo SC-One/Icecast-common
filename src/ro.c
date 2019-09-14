@@ -68,8 +68,7 @@ igloo_ro_t      igloo_RO_TO_TYPE_raw(igloo_ro_t object, const igloo_ro_type_t *t
     return igloo_RO_IS_VALID_raw_li(object, type) ? object : igloo_RO_NULL;
 }
 
-
-igloo_ro_t      igloo_ro_new__raw(const igloo_ro_type_t *type, const char *name, igloo_ro_t associated)
+igloo_ro_t      igloo_ro_new__raw(const igloo_ro_type_t *type, const char *name, igloo_ro_t associated, igloo_ro_t instance)
 {
     igloo_ro_base_t *base;
 
@@ -102,10 +101,19 @@ igloo_ro_t      igloo_ro_new__raw(const igloo_ro_type_t *type, const char *name,
         base->associated = associated;
     }
 
+    if (!igloo_RO_IS_NULL(instance)) {
+        if (igloo_ro_ref(instance) != igloo_ERROR_NONE) {
+            igloo_ro_unref(base);
+            return igloo_RO_NULL;
+        }
+
+        base->instance = instance;
+    }
+
     return (igloo_ro_t)base;
 }
 
-igloo_ro_t      igloo_ro_new__simple(const igloo_ro_type_t *type, const char *name, igloo_ro_t associated, ...)
+igloo_ro_t      igloo_ro_new__simple(const igloo_ro_type_t *type, const char *name, igloo_ro_t associated, igloo_ro_t instance, ...)
 {
     igloo_ro_t ret;
     int res;
@@ -117,11 +125,11 @@ igloo_ro_t      igloo_ro_new__simple(const igloo_ro_type_t *type, const char *na
     if (!type->type_newcb)
         return igloo_RO_NULL;
 
-    ret = igloo_ro_new__raw(type, name, associated);
+    ret = igloo_ro_new__raw(type, name, associated, instance);
     if (igloo_RO_IS_NULL(ret))
         return igloo_RO_NULL;
 
-    va_start(ap, associated);
+    va_start(ap, instance);
     res = type->type_newcb(ret, type, ap);
     va_end(ap);
 

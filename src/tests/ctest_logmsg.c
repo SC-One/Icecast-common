@@ -28,11 +28,11 @@ static void test_create_unref(void)
     ctest_test("logmsg created", !igloo_RO_IS_NULL(msg));
     ctest_test("un-referenced", igloo_ro_unref(msg) == igloo_ERROR_NONE);
 
-    formater = igloo_logmsg_formarter(igloo_RO_NULL, NULL, NULL, igloo_RO_NULL);
+    formater = igloo_logmsg_formarter(igloo_RO_NULL, NULL, NULL, igloo_RO_NULL, igloo_RO_NULL);
     ctest_test("formater created", !igloo_RO_IS_NULL(formater));
     ctest_test("un-referenced", igloo_ro_unref(formater) == igloo_ERROR_NONE);
 
-    filter = igloo_logmsg_filter(igloo_LOGLEVEL__NONE, igloo_LOGLEVEL__NONE, igloo_LOGMSG_OPT_NONE, igloo_LOGMSG_OPT_NONE, NULL, NULL, NULL, NULL, igloo_RO_NULL);
+    filter = igloo_logmsg_filter(igloo_LOGLEVEL__NONE, igloo_LOGLEVEL__NONE, igloo_LOGMSG_OPT_NONE, igloo_LOGMSG_OPT_NONE, NULL, NULL, NULL, NULL, igloo_RO_NULL, igloo_RO_NULL);
     ctest_test("filter created", !igloo_RO_IS_NULL(filter));
     ctest_test("un-referenced", igloo_ro_unref(filter) == igloo_ERROR_NONE);
 }
@@ -96,7 +96,7 @@ static void test_filter(void)
     igloo_logmsg_t *msg;
     igloo_ro_base_t *base;
 
-    filter = igloo_logmsg_filter(igloo_LOGLEVEL_ERROR, igloo_LOGLEVEL_WARN, igloo_LOGMSG_OPT_NONE, igloo_LOGMSG_OPT_NONE, NULL, NULL, NULL, NULL, igloo_RO_NULL);
+    filter = igloo_logmsg_filter(igloo_LOGLEVEL_ERROR, igloo_LOGLEVEL_WARN, igloo_LOGMSG_OPT_NONE, igloo_LOGMSG_OPT_NONE, NULL, NULL, NULL, NULL, igloo_RO_NULL, igloo_RO_NULL);
     ctest_test("filter created", !igloo_RO_IS_NULL(filter));
 
     base = igloo_ro_new(igloo_ro_base_t);

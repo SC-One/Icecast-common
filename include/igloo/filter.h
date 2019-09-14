@@ -67,7 +67,7 @@ typedef struct {
  *  name, associated
  *      See refobject_new().
  */
-igloo_filter_t * igloo_filter_new(const igloo_filter_ifdesc_t *ifdesc, igloo_ro_t backend_object, void *backend_userdata, const char *name, igloo_ro_t associated);
+igloo_filter_t * igloo_filter_new(const igloo_filter_ifdesc_t *ifdesc, igloo_ro_t backend_object, void *backend_userdata, const char *name, igloo_ro_t associated, igloo_ro_t instance);
 
 /* This tests a object according to the filter.
  * Parameters:
