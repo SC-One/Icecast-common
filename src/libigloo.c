@@ -52,6 +52,9 @@ igloo_RO_PRIVATE_TYPE(igloo_instance_t,
         igloo_RO_TYPEDECL_FREE(igloo_initialize__free)
         );
 
+/* Internal forwarding */
+const igloo_ro_type_t **igloo_instance_type = &igloo_ro__type__igloo_instance_t;
+
 igloo_ro_t     igloo_initialize(void)
 {
     igloo_instance_t *ret;

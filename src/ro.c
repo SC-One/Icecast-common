@@ -102,9 +102,14 @@ igloo_ro_t      igloo_ro_new__raw(const igloo_ro_type_t *type, const char *name,
     }
 
     if (!igloo_RO_IS_NULL(instance)) {
-        if (igloo_ro_ref(instance) != igloo_ERROR_NONE) {
-            igloo_ro_unref(base);
-            return igloo_RO_NULL;
+        if (!igloo_IS_INSTANCE(instance)) {
+            /* In this case we're fine if this returns igloo_RO_NULL. */
+            instance = igloo_ro_get_instance(instance);
+        } else {
+            if (igloo_ro_ref(instance) != igloo_ERROR_NONE) {
+                igloo_ro_unref(base);
+                return igloo_RO_NULL;
+            }
         }
 
         base->instance = instance;
@@ -335,7 +340,13 @@ igloo_ro_t      igloo_ro_get_instance(igloo_ro_t self)
         igloo_thread_mutex_unlock(&(base->lock));
         return igloo_RO_NULL;
     }
-    ret = base->instance;
+
+    if (igloo_IS_INSTANCE(base)) {
+        ret = (igloo_ro_t)base;
+    } else {
+        ret = base->instance;
+    }
+
     if (!igloo_RO_IS_NULL(ret)) {
         if (igloo_ro_ref(ret) != igloo_ERROR_NONE) {
             igloo_thread_mutex_unlock(&(base->lock));

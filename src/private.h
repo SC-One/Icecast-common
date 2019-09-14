@@ -36,6 +36,10 @@ void igloo_resolver_shutdown(void);
 void igloo_log_initialize(void);
 void igloo_log_shutdown(void);
 
+/* Instance type internal forwarding */
+const igloo_ro_type_t **igloo_instance_type;
+#define igloo_IS_INSTANCE(x) (igloo_RO_GET_TYPE((x)) == *igloo_instance_type)
+
 /* Basic interface */
 #define igloo_interface_base(type) \
     /* The base object. */ \
