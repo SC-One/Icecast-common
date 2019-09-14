@@ -134,7 +134,7 @@ int igloo_objecthandler_push_filter(igloo_objecthandler_t *handler, igloo_filter
 
     igloo_thread_rwlock_wlock(&(handler->rwlock));
     if (!handler->filter_list && handler->filter_a && handler->filter_b) {
-        handler->filter_list = igloo_ro_new(igloo_list_t);
+        handler->filter_list = igloo_ro_new_ext(igloo_list_t, NULL, igloo_RO_NULL, handler);
         if (!handler->filter_list) {
             igloo_thread_rwlock_unlock(&(handler->rwlock));
             return -1;

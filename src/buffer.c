@@ -59,11 +59,6 @@ igloo_buffer_t *  igloo_buffer_new(ssize_t preallocation, const char *name, iglo
     return buffer;
 }
 
-igloo_buffer_t *  igloo_buffer_new_simple(void)
-{
-    return igloo_ro_new(igloo_buffer_t);
-}
-
 void        igloo_buffer_preallocate(igloo_buffer_t *buffer, size_t request)
 {
     void *n;

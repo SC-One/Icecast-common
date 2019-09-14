@@ -1287,7 +1287,7 @@ igloo_reportxml_t *           igloo_reportxml_database_build_report(igloo_report
     } else if (count == 0) {
         /* Empty definition? Not exactly an exciting report... */
         igloo_ro_unref(definition);
-        return igloo_ro_new(igloo_reportxml_t);
+        return igloo_ro_new_ext(igloo_reportxml_t, NULL, igloo_RO_NULL, db);
     }
 
     if (type == igloo_REPORTXML_NODE_TYPE__ERROR) {
@@ -1313,7 +1313,7 @@ igloo_reportxml_t *           igloo_reportxml_database_build_report(igloo_report
         break;
     }
 
-    ret = igloo_ro_new(igloo_reportxml_t);
+    ret = igloo_ro_new_ext(igloo_reportxml_t, NULL, igloo_RO_NULL, db);
     if (!ret) {
         igloo_ro_unref(definition);
         return NULL;

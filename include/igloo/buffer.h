@@ -47,14 +47,6 @@ igloo_RO_FORWARD_TYPE(igloo_buffer_t);
  */
 igloo_buffer_t *  igloo_buffer_new(ssize_t preallocation, const char *name, igloo_ro_t associated, igloo_ro_t instance);
 
-/* Depreciated: This creates a new buffer with defaults.
- * Do NOT use this. Use refobject_new(igloo_buffer_t)
- *
- * This is the same as:
- *  igloo_buffer_new(-1, NULL, NULL, REFOBJECT_NULL)
- */
-igloo_buffer_t *  igloo_buffer_new_simple(void);
-
 /* This function preallocates space for later use.
  * Parameters:
  *  buffer
