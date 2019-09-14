@@ -375,7 +375,7 @@ igloo_ro_t      igloo_ro_convert(igloo_ro_t self, const igloo_ro_type_t *type, i
     return ret;
 }
 
-igloo_ro_t igloo_ro_get_interface(igloo_ro_t self, const igloo_ro_type_t *type, const char *name, igloo_ro_t associated)
+igloo_ro_t igloo_ro_get_interface_ext(igloo_ro_t self, const igloo_ro_type_t *type, const char *name, igloo_ro_t associated)
 {
     igloo_ro_base_t *base = igloo_RO__GETBASE(self);
     igloo_ro_t ret = igloo_RO_NULL;

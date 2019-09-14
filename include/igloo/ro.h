@@ -370,7 +370,8 @@ igloo_ro_t      igloo_ro_convert(igloo_ro_t self, const igloo_ro_type_t *type, i
  * Returns:
  *  An object that represents the given interface or igloo_RO_NULL.
  */
-igloo_ro_t igloo_ro_get_interface(igloo_ro_t self, const igloo_ro_type_t *type, const char *name, igloo_ro_t associated);
+igloo_ro_t igloo_ro_get_interface_ext(igloo_ro_t self, const igloo_ro_type_t *type, const char *name, igloo_ro_t associated);
+#define igloo_ro_get_interface(self, type) igloo_RO_TO_TYPE(igloo_ro_get_interface_ext((self), igloo_RO_GET_TYPE_BY_SYMBOL(type), NULL, igloo_RO_NULL), type)
 
 /* Convert a object to a string.
  * This is used for debugging and presenting to the user.
