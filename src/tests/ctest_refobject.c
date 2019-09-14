@@ -180,7 +180,7 @@ static void test_name(void)
     const char *name = "test object name";
     const char *ret;
 
-    a = igloo_ro_new_ext(igloo_ro_base_t, name, igloo_RO_NULL);
+    a = igloo_ro_new_ext(igloo_ro_base_t, name, igloo_RO_NULL, igloo_RO_NULL);
     ctest_test("refobject created", !igloo_RO_IS_NULL(a));
 
     ret = igloo_ro_get_name(a);
@@ -197,7 +197,7 @@ static void test_associated(void)
     a = igloo_ro_new(igloo_ro_base_t);
     ctest_test("refobject created", !igloo_RO_IS_NULL(a));
 
-    b = igloo_ro_new_ext(igloo_ro_base_t, NULL, a);
+    b = igloo_ro_new_ext(igloo_ro_base_t, NULL, a, igloo_RO_NULL);
     ctest_test("refobject created with associated", !igloo_RO_IS_NULL(b));
 
     ctest_test("un-referenced (1 of 2)", igloo_ro_unref(b) == igloo_ERROR_NONE);

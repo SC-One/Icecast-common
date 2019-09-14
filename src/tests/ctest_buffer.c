@@ -22,7 +22,7 @@ static void test_create_ref_unref(void)
 {
     igloo_buffer_t *a;
 
-    a = igloo_buffer_new(-1, NULL, igloo_RO_NULL);
+    a = igloo_buffer_new(-1, NULL, igloo_RO_NULL, igloo_RO_NULL);
     ctest_test("buffer created", a != NULL);
     ctest_test("un-referenced", igloo_ro_unref(a) == igloo_ERROR_NONE);
 
@@ -38,7 +38,7 @@ static void test_name(void)
     const char *name = "test object name";
     const char *ret;
 
-    a = igloo_buffer_new(-1, name, igloo_RO_NULL);
+    a = igloo_buffer_new(-1, name, igloo_RO_NULL, igloo_RO_NULL);
     ctest_test("buffer created", a != NULL);
 
     ret = igloo_ro_get_name(a);
@@ -57,7 +57,7 @@ static void test_associated(void)
     ctest_test("refobject created", !igloo_RO_IS_NULL(a));
 
 
-    b = igloo_buffer_new(-1, NULL, a);
+    b = igloo_buffer_new(-1, NULL, a, igloo_RO_NULL);
     ctest_test("buffer created with associated", !igloo_RO_IS_NULL(b));
 
     ctest_test("un-referenced (1 of 2)", igloo_ro_unref(b) == igloo_ERROR_NONE);
