@@ -88,7 +88,7 @@ typedef unsigned long int igloo_ro_cf_t;
  *  name, associated
  *      See igloo_ro_new().
  */
-typedef igloo_ro_t (*igloo_ro_clone_t)(igloo_ro_t self, igloo_ro_cf_t required, igloo_ro_cf_t allowed, const char *name, igloo_ro_t associated);
+typedef igloo_ro_t (*igloo_ro_clone_t)(igloo_ro_t self, igloo_ro_cf_t required, igloo_ro_cf_t allowed, const char *name, igloo_ro_t associated, igloo_ro_t instance);
 
 /* Type used for callback called when the object needs to be converted to another type.
  *
@@ -111,7 +111,7 @@ typedef igloo_ro_t (*igloo_ro_clone_t)(igloo_ro_t self, igloo_ro_cf_t required, 
  *  name, associated
  *      See igloo_ro_new().
  */
-typedef igloo_ro_t (*igloo_ro_convert_t)(igloo_ro_t self, const igloo_ro_type_t *type, igloo_ro_cf_t required, igloo_ro_cf_t allowed, const char *name, igloo_ro_t associated);
+typedef igloo_ro_t (*igloo_ro_convert_t)(igloo_ro_t self, const igloo_ro_type_t *type, igloo_ro_cf_t required, igloo_ro_cf_t allowed, const char *name, igloo_ro_t associated, igloo_ro_t instance);
 
 /* Type used for callback called when a specific interface to the object is requested.
  *
@@ -129,7 +129,7 @@ typedef igloo_ro_t (*igloo_ro_convert_t)(igloo_ro_t self, const igloo_ro_type_t 
  *  name, associated
  *      See igloo_ro_new().
  */
-typedef igloo_ro_t (*igloo_ro_get_interface_t)(igloo_ro_t self, const igloo_ro_type_t *type, const char *name, igloo_ro_t associated);
+typedef igloo_ro_t (*igloo_ro_get_interface_t)(igloo_ro_t self, const igloo_ro_type_t *type, const char *name, igloo_ro_t associated, igloo_ro_t instance);
 
 /* Type used to store flags for stringify operation.
  */

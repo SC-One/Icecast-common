@@ -367,7 +367,7 @@ igloo_ro_t      igloo_ro_clone(igloo_ro_t self, igloo_ro_cf_t required, igloo_ro
     }
 
     if (base->type->type_clonecb)
-        ret = base->type->type_clonecb(self, required, allowed, name, associated);
+        ret = base->type->type_clonecb(self, required, allowed, name, associated, base->instance);
     igloo_thread_mutex_unlock(&(base->lock));
 
     return ret;
@@ -398,11 +398,11 @@ igloo_ro_t      igloo_ro_convert(igloo_ro_t self, const igloo_ro_type_t *type, i
         allowed = igloo_RO_CF_DEFAULT;
 
     if (base->type->type_convertcb)
-        ret = base->type->type_convertcb(self, type, required, allowed, name, associated);
+        ret = base->type->type_convertcb(self, type, required, allowed, name, associated, base->instance);
 
     if (igloo_RO_IS_NULL(ret))
         if (type->type_convertcb)
-            ret = type->type_convertcb(self, type, required, allowed, name, associated);
+            ret = type->type_convertcb(self, type, required, allowed, name, associated, base->instance);
     igloo_thread_mutex_unlock(&(base->lock));
 
     return ret;
@@ -428,7 +428,7 @@ igloo_ro_t igloo_ro_get_interface_ext(igloo_ro_t self, const igloo_ro_type_t *ty
     igloo_thread_mutex_unlock(&(base->lock));
 
     if (base->type->type_get_interfacecb)
-        ret = base->type->type_get_interfacecb(self, type, name, associated);
+        ret = base->type->type_get_interfacecb(self, type, name, associated, base->instance);
 
     igloo_thread_mutex_lock(&(base->lock));
     /* remove temp reference
