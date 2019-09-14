@@ -94,7 +94,7 @@ igloo_ro_t      igloo_ro_new__raw(const igloo_ro_type_t *type, const char *name,
     }
 
     if (!igloo_RO_IS_NULL(associated)) {
-        if (igloo_ro_ref(associated) != 0) {
+        if (igloo_ro_ref(associated) != igloo_ERROR_NONE) {
             igloo_ro_unref(base);
             return igloo_RO_NULL;
         }
@@ -133,22 +133,22 @@ igloo_ro_t      igloo_ro_new__simple(const igloo_ro_type_t *type, const char *na
     return ret;
 }
 
-int             igloo_ro_ref(igloo_ro_t self)
+igloo_error_t igloo_ro_ref(igloo_ro_t self)
 {
     igloo_ro_base_t *base = igloo_RO__GETBASE(self);
 
     if (!base)
-        return -1;
+        return igloo_ERROR_FAULT;
 
     igloo_thread_mutex_lock(&(base->lock));
     if (!base->refc) {
         igloo_thread_mutex_unlock(&(base->lock));
-        return -1;
+        return igloo_ERROR_GENERIC;
     }
     base->refc++;
     igloo_thread_mutex_unlock(&(base->lock));
 
-    return 0;
+    return igloo_ERROR_NONE;
 }
 
 static inline void igloo_ro__destory(igloo_ro_base_t *base)
@@ -269,7 +269,7 @@ igloo_ro_t      igloo_ro_get_associated(igloo_ro_t self)
     }
     ret = base->associated;
     if (!igloo_RO_IS_NULL(ret)) {
-        if (igloo_ro_ref(ret) != 0) {
+        if (igloo_ro_ref(ret) != igloo_ERROR_NONE) {
             igloo_thread_mutex_unlock(&(base->lock));
             return igloo_RO_NULL;
         }
@@ -283,18 +283,19 @@ igloo_error_t igloo_ro_set_associated(igloo_ro_t self, igloo_ro_t associated)
 {
     igloo_ro_base_t *base = igloo_RO__GETBASE(self);
     igloo_ro_t old;
+    igloo_error_t ret;
 
     if (!base)
-        return 0;
+        return igloo_ERROR_FAULT;
 
     /* We can not set ourself to be our associated. */
     if (base == igloo_RO__GETBASE(associated))
         return igloo_ERROR_GENERIC;
 
     if (!igloo_RO_IS_NULL(associated)) {
-        if (igloo_ro_ref(associated) != 0) {
+        if ((ret = igloo_ro_ref(associated)) != igloo_ERROR_NONE) {
             /* Could not get a reference on the new associated object. */
-            return igloo_ERROR_GENERIC;
+            return ret;
         }
     }
 

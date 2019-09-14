@@ -295,7 +295,7 @@ igloo_ro_t      igloo_ro_new__simple(const igloo_ro_type_t *type, const char *na
 #define         igloo_ro_new_ext(type, name, associated, ...)   igloo_RO_TO_TYPE(igloo_ro_new__simple(igloo_RO_GET_TYPE_BY_SYMBOL(type), (name), (associated), ## __VA_ARGS__), type)
 
 /* This increases the reference counter of the object */
-int             igloo_ro_ref(igloo_ro_t self);
+igloo_error_t   igloo_ro_ref(igloo_ro_t self);
 /* This decreases the reference counter of the object.
  * If the object's reference counter reaches zero the object is freed.
  */

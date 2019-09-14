@@ -14,6 +14,7 @@
 
 #include <igloo/ro.h>
 #include <igloo/io.h>
+#include <igloo/error.h>
 #include "private.h"
 
 void igloo_interface_base_free(igloo_ro_t self)
@@ -48,7 +49,7 @@ igloo_ro_t igloo_interface_base_new_real(const igloo_ro_type_t *type, size_t des
         return igloo_RO_NULL;
 
     if (!igloo_RO_IS_NULL(backend_object)) {
-        if (igloo_ro_ref(backend_object) != 0) {
+        if (igloo_ro_ref(backend_object) != igloo_ERROR_NONE) {
             igloo_ro_unref(self);
             return igloo_RO_NULL;
         }

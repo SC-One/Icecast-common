@@ -19,6 +19,7 @@
 #include <igloo/objecthandler.h>
 #include <igloo/filter.h>
 #include <igloo/io.h>
+#include <igloo/error.h>
 #include "private.h"
 
 #define LOG_MAXLINELEN 1024
@@ -103,7 +104,7 @@ igloo_logmsg_t * igloo_logmsg_new(const char *name, igloo_ro_t associated,
 
 
         if (referenced) {
-            if (igloo_ro_ref(referenced) != 0)
+            if (igloo_ro_ref(referenced) != igloo_ERROR_NONE)
                 break;
 
             logmsg->referenced = referenced;
@@ -160,7 +161,7 @@ int igloo_logmsg_get_extra(igloo_logmsg_t *msg, igloo_logmsg_opt_t *options, igl
 
     if (referenced) {
         if (msg->referenced) {
-            if (igloo_ro_ref(msg->referenced) != 0)
+            if (igloo_ro_ref(msg->referenced) != igloo_ERROR_NONE)
                 return -1;
 
             *referenced = msg->referenced;

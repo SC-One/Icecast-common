@@ -288,7 +288,7 @@ igloo_reportxml_node_t *      igloo_reportxml_get_root_node(igloo_reportxml_t *r
     if (!report)
         return NULL;
 
-    if (igloo_ro_ref(report->root) != 0)
+    if (igloo_ro_ref(report->root) != igloo_ERROR_NONE)
         return NULL;
 
     return report->root;
@@ -778,7 +778,7 @@ int                     igloo_reportxml_node_add_child(igloo_reportxml_node_t *n
 
     node->childs = n;
 
-    if (igloo_ro_ref(child) != 0)
+    if (igloo_ro_ref(child) != igloo_ERROR_NONE)
         return -1;
 
     node->childs[node->childs_len++] = child;
@@ -802,7 +802,7 @@ igloo_reportxml_node_t *      igloo_reportxml_node_get_child(igloo_reportxml_nod
     if (idx >= node->childs_len)
         return NULL;
 
-    if (igloo_ro_ref(node->childs[idx]) != 0)
+    if (igloo_ro_ref(node->childs[idx]) != igloo_ERROR_NONE)
         return NULL;
 
     return node->childs[idx];
@@ -822,7 +822,7 @@ igloo_reportxml_node_t *      igloo_reportxml_node_get_child_by_attribute(igloo_
         if (strcmp((const char*)k, value) == 0) {
             xmlFree(k);
 
-            if (igloo_ro_ref(node) != 0)
+            if (igloo_ro_ref(node) != igloo_ERROR_NONE)
                 return NULL;
 
             return node;
@@ -850,7 +850,7 @@ igloo_reportxml_node_t *      igloo_reportxml_node_get_child_by_type(igloo_repor
         return NULL;
 
     if (node->type == type) {
-        if (igloo_ro_ref(node) != 0)
+        if (igloo_ro_ref(node) != igloo_ERROR_NONE)
             return NULL;
         return node;
     }
@@ -1151,7 +1151,7 @@ static igloo_reportxml_node_t *      __reportxml_database_build_node_ext(igloo_r
 
     igloo_ro_unref(search);
 
-    if (igloo_ro_ref(found) != 0) {
+    if (igloo_ro_ref(found) != igloo_ERROR_NONE) {
         igloo_thread_mutex_unlock(&(db->lock));
         return NULL;
     }

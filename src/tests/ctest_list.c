@@ -470,7 +470,7 @@ static void test_list_policy_fixed_pipe_push(void) {
 
         if (i == 1) {
             second_element = element;
-            ctest_test("referenced 2nd test object", igloo_ro_ref(second_element) == 0);
+            ctest_test("referenced 2nd test object", igloo_ro_ref(second_element) == igloo_ERROR_NONE);
         }
 
         ctest_test("un-referenced test object", igloo_ro_unref(element) == igloo_ERROR_NONE);
@@ -504,7 +504,7 @@ static void test_list_policy_fixed_pipe_unshift(void) {
 
         if (i == 1) {
             second_element = element;
-            ctest_test("referenced 2nd test object", igloo_ro_ref(second_element) == 0);
+            ctest_test("referenced 2nd test object", igloo_ro_ref(second_element) == igloo_ERROR_NONE);
         }
 
         ctest_test("un-referenced test object", igloo_ro_unref(element) == igloo_ERROR_NONE);
@@ -568,7 +568,7 @@ static void test_list_remove(void) {
 
         if (i == 1) {
             second_element = element;
-            ctest_test("referenced 2nd test object", igloo_ro_ref(second_element) == 0);
+            ctest_test("referenced 2nd test object", igloo_ro_ref(second_element) == igloo_ERROR_NONE);
         }
 
         ctest_test("un-referenced test object", igloo_ro_unref(element) == igloo_ERROR_NONE);
