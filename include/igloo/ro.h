@@ -302,15 +302,15 @@ int             igloo_ro_ref(igloo_ro_t self);
 int             igloo_ro_unref(igloo_ro_t self);
 
 /* This is the same as igloo_ro_ref() and igloo_ro_unref() but increases/decreases the weak reference counter. */
-int             igloo_ro_weak_ref(igloo_ro_t self);
-int             igloo_ro_weak_unref(igloo_ro_t self);
+igloo_error_t   igloo_ro_weak_ref(igloo_ro_t self);
+igloo_error_t   igloo_ro_weak_unref(igloo_ro_t self);
 
 /* This gets the object's name */
 const char *    igloo_ro_get_name(igloo_ro_t self);
 
 /* This gets the object's associated object. */
 igloo_ro_t      igloo_ro_get_associated(igloo_ro_t self);
-int             igloo_ro_set_associated(igloo_ro_t self, igloo_ro_t associated);
+igloo_error_t   igloo_ro_set_associated(igloo_ro_t self, igloo_ro_t associated);
 
 /* Clone the given object returning a copy of it.
  *

@@ -201,38 +201,38 @@ int             igloo_ro_unref(igloo_ro_t self)
     return 0;
 }
 
-int             igloo_ro_weak_ref(igloo_ro_t self)
+igloo_error_t igloo_ro_weak_ref(igloo_ro_t self)
 {
     igloo_ro_base_t *base = igloo_RO__GETBASE(self);
 
     if (!base)
-        return -1;
+        return igloo_ERROR_FAULT;
 
     igloo_thread_mutex_lock(&(base->lock));
     base->wrefc++;
     igloo_thread_mutex_unlock(&(base->lock));
 
-    return 0;
+    return igloo_ERROR_NONE;
 }
 
-int             igloo_ro_weak_unref(igloo_ro_t self)
+igloo_error_t  igloo_ro_weak_unref(igloo_ro_t self)
 {
     igloo_ro_base_t *base = igloo_RO__GETBASE(self);
 
     if (!base)
-        return -1;
+        return igloo_ERROR_FAULT;
 
     igloo_thread_mutex_lock(&(base->lock));
     base->wrefc--;
 
     if (base->refc || base->wrefc) {
         igloo_thread_mutex_unlock(&(base->lock));
-        return 0;
+        return igloo_ERROR_NONE;
     }
 
     igloo_ro__destory(base);
 
-    return 0;
+    return igloo_ERROR_NONE;
 }
 
 const char *    igloo_ro_get_name(igloo_ro_t self)
@@ -279,7 +279,7 @@ igloo_ro_t      igloo_ro_get_associated(igloo_ro_t self)
     return ret;
 }
 
-int             igloo_ro_set_associated(igloo_ro_t self, igloo_ro_t associated)
+igloo_error_t igloo_ro_set_associated(igloo_ro_t self, igloo_ro_t associated)
 {
     igloo_ro_base_t *base = igloo_RO__GETBASE(self);
     igloo_ro_t old;
@@ -289,12 +289,12 @@ int             igloo_ro_set_associated(igloo_ro_t self, igloo_ro_t associated)
 
     /* We can not set ourself to be our associated. */
     if (base == igloo_RO__GETBASE(associated))
-        return -1;
+        return igloo_ERROR_GENERIC;
 
     if (!igloo_RO_IS_NULL(associated)) {
         if (igloo_ro_ref(associated) != 0) {
             /* Could not get a reference on the new associated object. */
-            return -1;
+            return igloo_ERROR_GENERIC;
         }
     }
 
@@ -302,7 +302,7 @@ int             igloo_ro_set_associated(igloo_ro_t self, igloo_ro_t associated)
     if (!base->refc) {
         igloo_ro_unref(associated);
         igloo_thread_mutex_unlock(&(base->lock));
-        return -1;
+        return igloo_ERROR_GENERIC;
     }
     old = base->associated;
     base->associated = associated;
@@ -310,7 +310,7 @@ int             igloo_ro_set_associated(igloo_ro_t self, igloo_ro_t associated)
 
     igloo_ro_unref(old);
 
-    return 0;
+    return igloo_ERROR_NONE;
 }
 
 igloo_ro_t      igloo_ro_clone(igloo_ro_t self, igloo_ro_cf_t required, igloo_ro_cf_t allowed, const char *name, igloo_ro_t associated)
