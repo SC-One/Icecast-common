@@ -62,7 +62,8 @@ void igloo_private__vsnprintf(char *str, size_t size, const char *format, va_lis
     int block_alt = 0;
     const char * arg;
     const void * argp;
-    char buf[80];
+    igloo_ro_t argro;
+    char buf[128];
 
     for (; *format && size; format++)
     {
@@ -125,6 +126,21 @@ void igloo_private__vsnprintf(char *str, size_t size, const char *format, va_lis
                     } else {
                         snprintf(buf, sizeof(buf), "%p", argp);
                         arg = buf;
+                    }
+                case 'P':
+                    if (!arg)
+                    {
+                        igloo_ro_base_t *base;
+                        argro = va_arg(ap, igloo_ro_t);
+                        base = igloo_RO__GETBASE(argro);
+                        if (base) {
+                            snprintf(buf, sizeof(buf), "{%s@%p}", base->type->type_name, base);
+                            arg = buf;
+                        } else if (block_alt) {
+                            arg = "-";
+                        } else {
+                            arg = "{igloo_RO_NULL}";
+                        }
                     }
                 case 'd':
                 case 'i':
