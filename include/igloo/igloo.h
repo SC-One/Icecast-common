@@ -48,6 +48,71 @@ extern "C" {
  */
 igloo_ro_t     igloo_initialize(void);
 
+/* Get per-instance error value
+ *
+ * Parameters:
+ *  self
+ *      An instance or any object that knows an instance.
+ *  result
+ *      Pointer to where to store the result.
+ * Returns:
+ *  igloo_ERROR_NONE if successful or error code otherwise.
+ */
+igloo_error_t igloo_instance_get_error(igloo_ro_t self, igloo_error_t *result);
+/* Set per-instance error value
+ *
+ * Parameters:
+ *  self
+ *      An instance or any object that knows an instance.
+ *  error
+ *      The new error value.
+ * Returns:
+ *  igloo_ERROR_NONE if successful or error code otherwise.
+ */
+igloo_error_t igloo_instance_set_error(igloo_ro_t self, igloo_error_t error);
+
+/* Set per-instance logger
+ *
+ * Note: The instance will only hold a weak reference. So the caller must
+ * ensure that there will be a strong reference somewhere else. Otherwise
+ * the logger will be released.
+ *
+ * Parameters:
+ *  self
+ *      An instance or any object that knows an instance.
+ *  logger
+ *      The logger to use.
+ * Returns:
+ *  igloo_ERROR_NONE if successful or error code otherwise.
+ */
+igloo_error_t igloo_instance_set_logger(igloo_ro_t self, igloo_objecthandler_t *logger);
+
+/* Get per-instance logger
+ *
+ * Parameters:
+ *  self
+ *      An instance or any object that knows an instance.
+ * Returns:
+ *  A strong reference to a logger or igloo_RO_NULL.
+ */
+igloo_objecthandler_t * igloo_instance_get_logger(igloo_ro_t self);
+
+/* Log a message with per-instance logger
+ *
+ * Note: This is much faster than using igloo_instance_get_logger() and
+ * using it's return value for single log messages. If you want to push many
+ * messages use igloo_instance_get_logger() and igloo_list_forward().
+ *
+ * Parameters:
+ *  self
+ *      An instance or any object that knows an instance.
+ *  msg
+ *      The message to log.
+ * Returns:
+ *  igloo_ERROR_NONE if successful or error code otherwise.
+ */
+igloo_error_t igloo_instance_log(igloo_ro_t self, igloo_ro_t msg);
+
 #ifdef __cplusplus
 }
 #endif
