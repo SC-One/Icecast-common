@@ -19,6 +19,10 @@ noinst_LTLIBRARIES = libice_ctest.la
 base_source_ro = src/ro.o \
 		 src/libigloo.o \
 		 src/private.o \
+		 src/objecthandler.o \
+		 src/list.o \
+		 src/filter.o \
+		 src/interface.o \
 		 thread/libicethread.la \
 		 avl/libiceavl.la \
 		 net/libicenet.la \
@@ -46,11 +50,7 @@ check_PROGRAMS += ctest_buffer.test
 
 ctest_list_test_SOURCES = %reldir%/ctest_list.c
 ctest_list_test_LDADD = libice_ctest.la \
-			$(base_source_ro) \
-			src/objecthandler.o \
-			src/filter.o \
-			src/interface.o \
-			src/list.o
+			$(base_source_ro)
 check_PROGRAMS += ctest_list.test
 
 ctest_reportxml_test_SOURCES = %reldir%/ctest_reportxml.c
@@ -63,10 +63,6 @@ ctest_logmsg_test_SOURCES = %reldir%/ctest_logmsg.c
 ctest_logmsg_test_LDADD = libice_ctest.la \
 			$(base_source_ro) \
 			src/io.o \
-			src/list.o \
-			src/interface.o \
-			src/objecthandler.o \
-			src/filter.o \
 			src/logmsg.o
 check_PROGRAMS += ctest_logmsg.test
 
