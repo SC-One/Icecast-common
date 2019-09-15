@@ -19,6 +19,7 @@
 #include <igloo/objecthandler.h>
 #include <igloo/filter.h>
 #include <igloo/io.h>
+#include <igloo/error.h>
 #include "private.h"
 
 #define LOG_MAXLINELEN 1024
@@ -53,7 +54,7 @@ igloo_RO_PUBLIC_TYPE(igloo_logmsg_t,
         );
 
 
-igloo_logmsg_t * igloo_logmsg_new(const char *name, igloo_ro_t associated,
+igloo_logmsg_t * igloo_logmsg_new(const char *name, igloo_ro_t associated, igloo_ro_t instance,
                                   const char *msgid,
                                   const char *cat,
                                   const char *func, const char *codefile, const ssize_t codeline,
@@ -62,7 +63,7 @@ igloo_logmsg_t * igloo_logmsg_new(const char *name, igloo_ro_t associated,
                                   igloo_list_t *referenced,
                                   const char *format, ...)
 {
-    igloo_logmsg_t *logmsg = igloo_ro_new_raw(igloo_logmsg_t, name, associated);
+    igloo_logmsg_t *logmsg = igloo_ro_new_raw(igloo_logmsg_t, name, associated, instance);
     va_list ap;
     char string[LOG_MAXLINELEN];
 
@@ -103,7 +104,7 @@ igloo_logmsg_t * igloo_logmsg_new(const char *name, igloo_ro_t associated,
 
 
         if (referenced) {
-            if (igloo_ro_ref(referenced) != 0)
+            if (igloo_ro_ref(referenced) != igloo_ERROR_NONE)
                 break;
 
             logmsg->referenced = referenced;
@@ -160,7 +161,7 @@ int igloo_logmsg_get_extra(igloo_logmsg_t *msg, igloo_logmsg_opt_t *options, igl
 
     if (referenced) {
         if (msg->referenced) {
-            if (igloo_ro_ref(msg->referenced) != 0)
+            if (igloo_ro_ref(msg->referenced) != igloo_ERROR_NONE)
                 return -1;
 
             *referenced = msg->referenced;
@@ -269,7 +270,7 @@ static const igloo_objecthandler_ifdesc_t igloo_logmsg_formarter_ifdesc = {
     .set_backend = __set_backend
 };
 
-igloo_objecthandler_t   * igloo_logmsg_formarter(igloo_ro_t backend, const char *subformat, const char *name, igloo_ro_t associated)
+igloo_objecthandler_t   * igloo_logmsg_formarter(igloo_ro_t backend, const char *subformat, const char *name, igloo_ro_t associated, igloo_ro_t instance)
 {
     igloo_logmsg_formarter_subtype_t *sf = NULL;
     igloo_objecthandler_t *objecthandler;
@@ -292,7 +293,7 @@ igloo_objecthandler_t   * igloo_logmsg_formarter(igloo_ro_t backend, const char 
         return NULL;
     }
 
-    objecthandler = igloo_objecthandler_new(&igloo_logmsg_formarter_ifdesc, NULL, sf, name, associated);
+    objecthandler = igloo_objecthandler_new(&igloo_logmsg_formarter_ifdesc, NULL, sf, name, associated, instance);
     if (!objecthandler) {
         free(sf);
     }
@@ -353,7 +354,7 @@ static const igloo_filter_ifdesc_t igloo_logmsg_filter_ifdesc = {
     .test = __test
 };
 
-igloo_filter_t          * igloo_logmsg_filter(igloo_loglevel_t level_min, igloo_loglevel_t level_max, igloo_logmsg_opt_t options_required, igloo_logmsg_opt_t options_absent, const struct timespec * ts_min, const struct timespec * ts_max, const char *cat, const char *name, igloo_ro_t associated)
+igloo_filter_t          * igloo_logmsg_filter(igloo_loglevel_t level_min, igloo_loglevel_t level_max, igloo_logmsg_opt_t options_required, igloo_logmsg_opt_t options_absent, const struct timespec * ts_min, const struct timespec * ts_max, const char *cat, const char *name, igloo_ro_t associated, igloo_ro_t instance)
 {
     igloo_filter_t *filter;
     igloo_logmsg_filter_mask_t *mask = calloc(1, sizeof(*mask));
@@ -385,7 +386,7 @@ igloo_filter_t          * igloo_logmsg_filter(igloo_loglevel_t level_min, igloo_
         }
     }
 
-    filter = igloo_filter_new(&igloo_logmsg_filter_ifdesc, igloo_RO_NULL, mask, name, associated);
+    filter = igloo_filter_new(&igloo_logmsg_filter_ifdesc, igloo_RO_NULL, mask, name, associated, instance);
     if (!filter) {
         free(mask);
     }

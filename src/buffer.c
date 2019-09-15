@@ -46,9 +46,9 @@ static void __free(igloo_ro_t self)
     free(buffer->buffer);
 }
 
-igloo_buffer_t *  igloo_buffer_new(ssize_t preallocation, const char *name, igloo_ro_t associated)
+igloo_buffer_t *  igloo_buffer_new(ssize_t preallocation, const char *name, igloo_ro_t associated, igloo_ro_t instance)
 {
-    igloo_buffer_t *buffer = igloo_ro_new_ext(igloo_buffer_t, name, associated);
+    igloo_buffer_t *buffer = igloo_ro_new_ext(igloo_buffer_t, name, associated, instance);
 
     if (!buffer)
         return NULL;
@@ -57,11 +57,6 @@ igloo_buffer_t *  igloo_buffer_new(ssize_t preallocation, const char *name, iglo
         igloo_buffer_preallocate(buffer, preallocation);
 
     return buffer;
-}
-
-igloo_buffer_t *  igloo_buffer_new_simple(void)
-{
-    return igloo_ro_new(igloo_buffer_t);
 }
 
 void        igloo_buffer_preallocate(igloo_buffer_t *buffer, size_t request)

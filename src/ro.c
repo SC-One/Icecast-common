@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include <igloo/ro.h>
+#include <igloo/error.h>
 #include "private.h"
 
 /* This is not static as it is used by igloo_RO_TYPEDECL_NEW_NOOP() */
@@ -67,8 +68,7 @@ igloo_ro_t      igloo_RO_TO_TYPE_raw(igloo_ro_t object, const igloo_ro_type_t *t
     return igloo_RO_IS_VALID_raw_li(object, type) ? object : igloo_RO_NULL;
 }
 
-
-igloo_ro_t      igloo_ro_new__raw(const igloo_ro_type_t *type, const char *name, igloo_ro_t associated)
+igloo_ro_t      igloo_ro_new__raw(const igloo_ro_type_t *type, const char *name, igloo_ro_t associated, igloo_ro_t instance)
 {
     igloo_ro_base_t *base;
 
@@ -93,7 +93,7 @@ igloo_ro_t      igloo_ro_new__raw(const igloo_ro_type_t *type, const char *name,
     }
 
     if (!igloo_RO_IS_NULL(associated)) {
-        if (igloo_ro_ref(associated) != 0) {
+        if (igloo_ro_ref(associated) != igloo_ERROR_NONE) {
             igloo_ro_unref(base);
             return igloo_RO_NULL;
         }
@@ -101,10 +101,27 @@ igloo_ro_t      igloo_ro_new__raw(const igloo_ro_type_t *type, const char *name,
         base->associated = associated;
     }
 
+    if (!igloo_RO_IS_NULL(instance)) {
+        if (!igloo_IS_INSTANCE(instance)) {
+            /* In this case we're fine if this returns igloo_RO_NULL. */
+            instance = igloo_ro_get_instance(instance);
+        } else {
+            if (igloo_ro_ref(instance) != igloo_ERROR_NONE) {
+                igloo_ro_unref(base);
+                return igloo_RO_NULL;
+            }
+        }
+
+        base->instance = instance;
+    } else {
+        if (!igloo_IS_INSTANCE_TYPE(type))
+            base->instance = igloo_get_default_instance();
+    }
+
     return (igloo_ro_t)base;
 }
 
-igloo_ro_t      igloo_ro_new__simple(const igloo_ro_type_t *type, const char *name, igloo_ro_t associated, ...)
+igloo_ro_t      igloo_ro_new__simple(const igloo_ro_type_t *type, const char *name, igloo_ro_t associated, igloo_ro_t instance, ...)
 {
     igloo_ro_t ret;
     int res;
@@ -116,11 +133,11 @@ igloo_ro_t      igloo_ro_new__simple(const igloo_ro_type_t *type, const char *na
     if (!type->type_newcb)
         return igloo_RO_NULL;
 
-    ret = igloo_ro_new__raw(type, name, associated);
+    ret = igloo_ro_new__raw(type, name, associated, instance);
     if (igloo_RO_IS_NULL(ret))
         return igloo_RO_NULL;
 
-    va_start(ap, associated);
+    va_start(ap, instance);
     res = type->type_newcb(ret, type, ap);
     va_end(ap);
 
@@ -132,22 +149,22 @@ igloo_ro_t      igloo_ro_new__simple(const igloo_ro_type_t *type, const char *na
     return ret;
 }
 
-int             igloo_ro_ref(igloo_ro_t self)
+igloo_error_t igloo_ro_ref(igloo_ro_t self)
 {
     igloo_ro_base_t *base = igloo_RO__GETBASE(self);
 
     if (!base)
-        return -1;
+        return igloo_ERROR_FAULT;
 
     igloo_thread_mutex_lock(&(base->lock));
     if (!base->refc) {
         igloo_thread_mutex_unlock(&(base->lock));
-        return -1;
+        return igloo_ERROR_GENERIC;
     }
     base->refc++;
     igloo_thread_mutex_unlock(&(base->lock));
 
-    return 0;
+    return igloo_ERROR_NONE;
 }
 
 static inline void igloo_ro__destory(igloo_ro_base_t *base)
@@ -158,24 +175,24 @@ static inline void igloo_ro__destory(igloo_ro_base_t *base)
     free(base);
 }
 
-int             igloo_ro_unref(igloo_ro_t self)
+igloo_error_t igloo_ro_unref(igloo_ro_t self)
 {
     igloo_ro_base_t *base = igloo_RO__GETBASE(self);
 
     if (!base)
-        return -1;
+        return igloo_ERROR_FAULT;
 
     igloo_thread_mutex_lock(&(base->lock));
 
     if (!base->refc) {
         igloo_thread_mutex_unlock(&(base->lock));
-        return -1;
+        return igloo_ERROR_GENERIC;
     }
 
     if (base->refc > 1) {
         base->refc--;
         igloo_thread_mutex_unlock(&(base->lock));
-        return 0;
+        return igloo_ERROR_NONE;
     }
 
     if (base->type->type_freecb)
@@ -184,6 +201,7 @@ int             igloo_ro_unref(igloo_ro_t self)
     base->refc--;
 
     igloo_ro_unref(base->associated);
+    igloo_ro_unref(base->instance);
 
     if (base->name)
         free(base->name);
@@ -191,47 +209,48 @@ int             igloo_ro_unref(igloo_ro_t self)
     if (base->wrefc) {
         /* only clear the object */
         base->associated = igloo_RO_NULL;
+        base->instance = igloo_RO_NULL;
         base->name = NULL;
         igloo_thread_mutex_unlock(&(base->lock));
     } else {
         igloo_ro__destory(base);
     }
 
-    return 0;
+    return igloo_ERROR_NONE;
 }
 
-int             igloo_ro_weak_ref(igloo_ro_t self)
+igloo_error_t igloo_ro_weak_ref(igloo_ro_t self)
 {
     igloo_ro_base_t *base = igloo_RO__GETBASE(self);
 
     if (!base)
-        return -1;
+        return igloo_ERROR_FAULT;
 
     igloo_thread_mutex_lock(&(base->lock));
     base->wrefc++;
     igloo_thread_mutex_unlock(&(base->lock));
 
-    return 0;
+    return igloo_ERROR_NONE;
 }
 
-int             igloo_ro_weak_unref(igloo_ro_t self)
+igloo_error_t  igloo_ro_weak_unref(igloo_ro_t self)
 {
     igloo_ro_base_t *base = igloo_RO__GETBASE(self);
 
     if (!base)
-        return -1;
+        return igloo_ERROR_FAULT;
 
     igloo_thread_mutex_lock(&(base->lock));
     base->wrefc--;
 
     if (base->refc || base->wrefc) {
         igloo_thread_mutex_unlock(&(base->lock));
-        return 0;
+        return igloo_ERROR_NONE;
     }
 
     igloo_ro__destory(base);
 
-    return 0;
+    return igloo_ERROR_NONE;
 }
 
 const char *    igloo_ro_get_name(igloo_ro_t self)
@@ -268,7 +287,7 @@ igloo_ro_t      igloo_ro_get_associated(igloo_ro_t self)
     }
     ret = base->associated;
     if (!igloo_RO_IS_NULL(ret)) {
-        if (igloo_ro_ref(ret) != 0) {
+        if (igloo_ro_ref(ret) != igloo_ERROR_NONE) {
             igloo_thread_mutex_unlock(&(base->lock));
             return igloo_RO_NULL;
         }
@@ -278,22 +297,23 @@ igloo_ro_t      igloo_ro_get_associated(igloo_ro_t self)
     return ret;
 }
 
-int             igloo_ro_set_associated(igloo_ro_t self, igloo_ro_t associated)
+igloo_error_t igloo_ro_set_associated(igloo_ro_t self, igloo_ro_t associated)
 {
     igloo_ro_base_t *base = igloo_RO__GETBASE(self);
     igloo_ro_t old;
+    igloo_error_t ret;
 
     if (!base)
-        return 0;
+        return igloo_ERROR_FAULT;
 
     /* We can not set ourself to be our associated. */
     if (base == igloo_RO__GETBASE(associated))
-        return -1;
+        return igloo_ERROR_GENERIC;
 
     if (!igloo_RO_IS_NULL(associated)) {
-        if (igloo_ro_ref(associated) != 0) {
+        if ((ret = igloo_ro_ref(associated)) != igloo_ERROR_NONE) {
             /* Could not get a reference on the new associated object. */
-            return -1;
+            return ret;
         }
     }
 
@@ -301,7 +321,7 @@ int             igloo_ro_set_associated(igloo_ro_t self, igloo_ro_t associated)
     if (!base->refc) {
         igloo_ro_unref(associated);
         igloo_thread_mutex_unlock(&(base->lock));
-        return -1;
+        return igloo_ERROR_GENERIC;
     }
     old = base->associated;
     base->associated = associated;
@@ -309,7 +329,38 @@ int             igloo_ro_set_associated(igloo_ro_t self, igloo_ro_t associated)
 
     igloo_ro_unref(old);
 
-    return 0;
+    return igloo_ERROR_NONE;
+}
+
+igloo_ro_t      igloo_ro_get_instance(igloo_ro_t self)
+{
+    igloo_ro_base_t *base = igloo_RO__GETBASE(self);
+    igloo_ro_t ret;
+
+    if (!base)
+        return igloo_RO_NULL;
+
+    igloo_thread_mutex_lock(&(base->lock));
+    if (!base->refc) {
+        igloo_thread_mutex_unlock(&(base->lock));
+        return igloo_RO_NULL;
+    }
+
+    if (igloo_IS_INSTANCE(base)) {
+        ret = (igloo_ro_t)base;
+    } else {
+        ret = base->instance;
+    }
+
+    if (!igloo_RO_IS_NULL(ret)) {
+        if (igloo_ro_ref(ret) != igloo_ERROR_NONE) {
+            igloo_thread_mutex_unlock(&(base->lock));
+            return igloo_RO_NULL;
+        }
+    }
+    igloo_thread_mutex_unlock(&(base->lock));
+
+    return ret;
 }
 
 igloo_ro_t      igloo_ro_clone(igloo_ro_t self, igloo_ro_cf_t required, igloo_ro_cf_t allowed, const char *name, igloo_ro_t associated)
@@ -332,13 +383,13 @@ igloo_ro_t      igloo_ro_clone(igloo_ro_t self, igloo_ro_cf_t required, igloo_ro
     }
 
     if (base->type->type_clonecb)
-        ret = base->type->type_clonecb(self, required, allowed, name, associated);
+        ret = base->type->type_clonecb(self, required, allowed, name, associated, base->instance);
     igloo_thread_mutex_unlock(&(base->lock));
 
     return ret;
 }
 
-igloo_ro_t      igloo_ro_convert(igloo_ro_t self, const igloo_ro_type_t *type, igloo_ro_cf_t required, igloo_ro_cf_t allowed, const char *name, igloo_ro_t associated)
+static igloo_ro_t      igloo_ro_convert_ext__no_lock(igloo_ro_t self, const igloo_ro_type_t *type, igloo_ro_cf_t required, igloo_ro_cf_t allowed, const char *name, igloo_ro_t associated)
 {
     igloo_ro_base_t *base = igloo_RO__GETBASE(self);
     igloo_ro_t ret = igloo_RO_NULL;
@@ -346,14 +397,11 @@ igloo_ro_t      igloo_ro_convert(igloo_ro_t self, const igloo_ro_type_t *type, i
     if (!base || !type)
         return igloo_RO_NULL;
 
-    igloo_thread_mutex_lock(&(base->lock));
     if (!base->refc) {
-        igloo_thread_mutex_unlock(&(base->lock));
         return igloo_RO_NULL;
     }
 
     if (base->type == type) {
-        igloo_thread_mutex_unlock(&(base->lock));
         return igloo_ro_clone(self, required, allowed, name, associated);
     }
 
@@ -363,17 +411,46 @@ igloo_ro_t      igloo_ro_convert(igloo_ro_t self, const igloo_ro_type_t *type, i
         allowed = igloo_RO_CF_DEFAULT;
 
     if (base->type->type_convertcb)
-        ret = base->type->type_convertcb(self, type, required, allowed, name, associated);
+        ret = base->type->type_convertcb(self, type, required, allowed, name, associated, base->instance);
 
     if (igloo_RO_IS_NULL(ret))
         if (type->type_convertcb)
-            ret = type->type_convertcb(self, type, required, allowed, name, associated);
+            ret = type->type_convertcb(self, type, required, allowed, name, associated, base->instance);
+
+    return ret;
+}
+
+igloo_ro_t      igloo_ro_convert_ext(igloo_ro_t self, const igloo_ro_type_t *type, igloo_ro_cf_t required, igloo_ro_cf_t allowed, const char *name, igloo_ro_t associated)
+{
+    igloo_ro_base_t *base = igloo_RO__GETBASE(self);
+    igloo_ro_t ret;
+
+    if (!base || !type)
+        return igloo_RO_NULL;
+
+    igloo_thread_mutex_lock(&(base->lock));
+	ret = igloo_ro_convert_ext__no_lock(self, type, required, allowed, name, associated);
     igloo_thread_mutex_unlock(&(base->lock));
 
     return ret;
 }
 
-igloo_ro_t igloo_ro_get_interface(igloo_ro_t self, const igloo_ro_type_t *type, const char *name, igloo_ro_t associated)
+igloo_ro_t      igloo_ro_convert_simple(igloo_ro_t self, const igloo_ro_type_t *type, igloo_ro_cf_t required, igloo_ro_cf_t allowed)
+{
+    igloo_ro_base_t *base = igloo_RO__GETBASE(self);
+    igloo_ro_t ret;
+
+    if (!base || !type)
+        return igloo_RO_NULL;
+
+    igloo_thread_mutex_lock(&(base->lock));
+	ret = igloo_ro_convert_ext__no_lock(self, type, required, allowed, base->name, base->associated);
+    igloo_thread_mutex_unlock(&(base->lock));
+
+    return ret;
+}
+
+igloo_ro_t igloo_ro_get_interface_ext(igloo_ro_t self, const igloo_ro_type_t *type, const char *name, igloo_ro_t associated)
 {
     igloo_ro_base_t *base = igloo_RO__GETBASE(self);
     igloo_ro_t ret = igloo_RO_NULL;
@@ -386,11 +463,36 @@ igloo_ro_t igloo_ro_get_interface(igloo_ro_t self, const igloo_ro_type_t *type, 
         igloo_thread_mutex_unlock(&(base->lock));
         return igloo_RO_NULL;
     }
+    /* create a temp reference
+     * This is required so we can run type_get_interfacecb() in unlocked state.
+     */
+    base->refc++;
+    igloo_thread_mutex_unlock(&(base->lock));
+
     if (base->type->type_get_interfacecb)
-        ret = base->type->type_get_interfacecb(self, type, name, associated);
+        ret = base->type->type_get_interfacecb(self, type, name, associated, base->instance);
+
+    igloo_thread_mutex_lock(&(base->lock));
+    /* remove temp reference
+     * If refc == 0 the application has a bug.
+     * TODO: We must tell someone about it.
+     * Anyway, we can not just set refc = -1, that will just break things more.
+     */
+    if (base->refc)
+        base->refc--;
     igloo_thread_mutex_unlock(&(base->lock));
 
     return ret;
+}
+
+static size_t igloo_ro_stringify__calc_object_strlen_short(igloo_ro_t self)
+{
+    igloo_ro_base_t *base = igloo_RO__GETBASE(self);
+
+    if (!base)
+        return 2;
+
+    return strlen(base->type->type_name) + 2+(64/4) /* pointer rendering */ + 4 /* "{@}\0" */;
 }
 
 char *          igloo_ro_stringify(igloo_ro_t self, igloo_ro_sy_t flags)
@@ -435,23 +537,14 @@ char *          igloo_ro_stringify(igloo_ro_t self, igloo_ro_sy_t flags)
         ret = base->type->type_stringifycb(self, flags);
     } else {
         if (flags & igloo_RO_SY_OBJECT) {
-            if (igloo_RO_IS_NULL(base->associated)) {
-                static const char *format = "{%s@%p, strong, name=%# H, associated=-}";
-                size_t len = strlen(base->type->type_name) + 1*(2+64/4) + strlen(format) + igloo_private__vsnprintf_Hstrlen(base->name, 1, 1) + 1;
+            static const char *format = "{%s@%p, strong, name=%# H, associated=%#P, instance=%#P}";
+            size_t len = strlen(base->type->type_name) + 1*(2+64/4) + strlen(format) + igloo_private__vsnprintf_Hstrlen(base->name, 1, 1) + 1 +
+                igloo_ro_stringify__calc_object_strlen_short(base->associated) +
+                igloo_ro_stringify__calc_object_strlen_short(base->instance);
 
-                ret = calloc(1, len);
-                if (ret) {
-                    igloo_private__snprintf(ret, len + 1, format, base->type->type_name, base, base->name);
-                }
-            } else {
-                static const char *format = "{%s@%p, strong, name=%# H, associated={%s@%p}}";
-                igloo_ro_base_t *associated = igloo_RO__GETBASE(base->associated);
-                size_t len = strlen(base->type->type_name) + strlen(associated->type->type_name) + 2*(2+64/4) + strlen(format) + igloo_private__vsnprintf_Hstrlen(base->name, 1, 1) + 1;
-
-                ret = calloc(1, len);
-                if (ret) {
-                    igloo_private__snprintf(ret, len + 1, format, base->type->type_name, base, base->name, associated->type->type_name, associated);
-                }
+            ret = calloc(1, len);
+            if (ret) {
+                igloo_private__snprintf(ret, len + 1, format, base->type->type_name, base, base->name, base->associated, base->instance);
             }
         }
     }
@@ -509,6 +602,26 @@ igloo_ro_cr_t   igloo_ro_compare(igloo_ro_t a, igloo_ro_t b)
 
     igloo_thread_mutex_unlock(&(base_b->lock));
     igloo_thread_mutex_unlock(&(base_a->lock));
+
+    return ret;
+}
+
+igloo_error_t igloo_ro_get_error(igloo_ro_t self, igloo_error_t *result)
+{
+    igloo_ro_base_t *base = igloo_RO__GETBASE(self);
+    igloo_error_t ret = igloo_ERROR_GENERIC;
+    igloo_error_t res = igloo_ERROR_GENERIC;
+
+    if (!base || !result)
+        return igloo_ERROR_GENERIC;
+
+    igloo_thread_mutex_lock(&(base->lock));
+    if (base->type->type_get_errorcb)
+        ret = base->type->type_get_errorcb(self, &res);
+    igloo_thread_mutex_unlock(&(base->lock));
+
+    if (ret == igloo_ERROR_NONE)
+        *result = res;
 
     return ret;
 }

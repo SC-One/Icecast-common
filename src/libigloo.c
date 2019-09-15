@@ -28,6 +28,7 @@ typedef struct igloo_instance_tag igloo_instance_t;
 #define igloo_RO_PRIVATETYPES igloo_RO_TYPE(igloo_instance_t)
 
 #include "../include/igloo/ro.h"
+#include "../include/igloo/error.h"
 #include "private.h"
 
 struct igloo_instance_tag {
@@ -35,9 +36,18 @@ struct igloo_instance_tag {
 };
 
 static size_t igloo_initialize__refc;
+static igloo_ro_t default_instance = igloo_RO_NULL;
+
 
 static void igloo_initialize__free(igloo_ro_t self)
 {
+
+    if (igloo_RO_IS_SAME(default_instance, self)) {
+        /* This is hacky, but needed to avoid free-before-unlock. */
+        igloo_RO__GETBASE(default_instance)->wrefc--;
+        default_instance = igloo_RO_NULL;
+    }
+
     igloo_initialize__refc--;
     if (igloo_initialize__refc)
         return;
@@ -51,6 +61,9 @@ static void igloo_initialize__free(igloo_ro_t self)
 igloo_RO_PRIVATE_TYPE(igloo_instance_t,
         igloo_RO_TYPEDECL_FREE(igloo_initialize__free)
         );
+
+/* Internal forwarding */
+const igloo_ro_type_t **igloo_instance_type = &igloo_ro__type__igloo_instance_t;
 
 igloo_ro_t     igloo_initialize(void)
 {
@@ -66,11 +79,28 @@ igloo_ro_t     igloo_initialize(void)
 
     snprintf(name, sizeof(name), "<libigloo instance %zu>", igloo_initialize__refc);
 
-    ret = igloo_ro_new_raw(igloo_instance_t, name, igloo_RO_NULL);
+    ret = igloo_ro_new_raw(igloo_instance_t, name, igloo_RO_NULL, igloo_RO_NULL);
     if (!ret)
         return igloo_RO_NULL;
 
     igloo_initialize__refc++;
 
+    if (igloo_RO_IS_NULL(default_instance)) {
+        if (igloo_ro_weak_ref(ret) == igloo_ERROR_NONE) {
+            default_instance = (igloo_ro_t)ret;
+        }
+    }
+
     return (igloo_ro_t)ret;
+}
+
+igloo_ro_t igloo_get_default_instance(void)
+{
+    if (igloo_RO_IS_NULL(default_instance))
+        return igloo_RO_NULL;
+
+    if (igloo_ro_ref(default_instance) != igloo_ERROR_NONE)
+        return igloo_RO_NULL;
+
+    return default_instance;
 }

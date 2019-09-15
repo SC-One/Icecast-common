@@ -130,7 +130,7 @@ typedef struct {
  *  name, associated
  *      See refobject_new().
  */
-igloo_io_t * igloo_io_new(const igloo_io_ifdesc_t *ifdesc, igloo_ro_t backend_object, void *backend_userdata, const char *name, igloo_ro_t associated);
+igloo_io_t * igloo_io_new(const igloo_io_ifdesc_t *ifdesc, igloo_ro_t backend_object, void *backend_userdata, const char *name, igloo_ro_t associated, igloo_ro_t instance);
 
 /* Read data from a IO handle.
  * Parameters:

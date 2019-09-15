@@ -31,7 +31,7 @@ extern "C" {
 
 #include "io.h"
 
-igloo_io_t * igloo_stdio_new_file(const char *filename, const char *mode, const char *name, igloo_ro_t associated);
+igloo_io_t * igloo_stdio_new_file(const char *filename, const char *mode, const char *name, igloo_ro_t associated, igloo_ro_t instance);
 
 #ifdef __cplusplus
 }

@@ -25,6 +25,7 @@
 
 #include <igloo/list.h>
 #include <igloo/objecthandler.h>
+#include <igloo/error.h>
 
 struct igloo_list_tag {
     igloo_ro_base_t __base;
@@ -216,7 +217,7 @@ int                     igloo_list_push(igloo_list_t *list, igloo_ro_t element)
             return -1;
     }
 
-    if (igloo_ro_ref(element) != 0)
+    if (igloo_ro_ref(element) != igloo_ERROR_NONE)
         return -1;
 
     list->elements[list->fill++] = element;
@@ -263,7 +264,7 @@ int                     igloo_list_unshift(igloo_list_t *list, igloo_ro_t elemen
     if (!list->offset)
         return -1;
 
-    if (igloo_ro_ref(element) != 0)
+    if (igloo_ro_ref(element) != igloo_ERROR_NONE)
         return -1;
 
     list->elements[--list->offset] = element;
@@ -317,7 +318,7 @@ static inline int igloo_list_copy_elements(igloo_list_t *list, igloo_list_t *ele
                 return -1;
         }
 
-        if (igloo_ro_ref(elements->elements[i]) != 0)
+        if (igloo_ro_ref(elements->elements[i]) != igloo_ERROR_NONE)
             return -1;
 
         list->elements[list->fill++] = elements->elements[i];
@@ -441,7 +442,7 @@ igloo_list_iterator_t * igloo_list_iterator_start(igloo_list_t *list, void *stor
     iterator = storage;
     memset(iterator, 0, sizeof(*iterator));
 
-    if (igloo_ro_ref(list) != 0)
+    if (igloo_ro_ref(list) != igloo_ERROR_NONE)
         return NULL;
 
     iterator->list = list;
@@ -463,7 +464,7 @@ igloo_ro_t              igloo_list_iterator_next(igloo_list_iterator_t *iterator
     if (physical >= iterator->list->fill)
         return igloo_RO_NULL;
 
-    if (igloo_ro_ref(iterator->list->elements[physical]) != 0)
+    if (igloo_ro_ref(iterator->list->elements[physical]) != igloo_ERROR_NONE)
         return igloo_RO_NULL;
 
     iterator->idx++;

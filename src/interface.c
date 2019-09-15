@@ -14,6 +14,7 @@
 
 #include <igloo/ro.h>
 #include <igloo/io.h>
+#include <igloo/error.h>
 #include "private.h"
 
 void igloo_interface_base_free(igloo_ro_t self)
@@ -30,7 +31,7 @@ void igloo_interface_base_free(igloo_ro_t self)
         free(iface->backend_userdata);
 }
 
-igloo_ro_t igloo_interface_base_new_real(const igloo_ro_type_t *type, size_t description_length, const igloo_interface_base_ifdesc_t *ifdesc, igloo_ro_t backend_object, void *backend_userdata, const char *name, igloo_ro_t associated)
+igloo_ro_t igloo_interface_base_new_real(const igloo_ro_type_t *type, size_t description_length, const igloo_interface_base_ifdesc_t *ifdesc, igloo_ro_t backend_object, void *backend_userdata, const char *name, igloo_ro_t associated, igloo_ro_t instance)
 {
     igloo_ro_t self;
     igloo__interface_base_t *base;
@@ -41,14 +42,14 @@ igloo_ro_t igloo_interface_base_new_real(const igloo_ro_type_t *type, size_t des
     if (ifdesc->base_length != sizeof(igloo_interface_base_ifdesc_t) || ifdesc->base_version != igloo_INTERFACE_DESCRIPTION_BASE__VERSION || ifdesc->description_length != description_length)
         return igloo_RO_NULL;
 
-    self = igloo_ro_new__raw(type, name, associated);
+    self = igloo_ro_new__raw(type, name, associated, instance);
     base = igloo_INTERFACE_CAST(self);
 
     if (igloo_RO_IS_NULL(self))
         return igloo_RO_NULL;
 
     if (!igloo_RO_IS_NULL(backend_object)) {
-        if (igloo_ro_ref(backend_object) != 0) {
+        if (igloo_ro_ref(backend_object) != igloo_ERROR_NONE) {
             igloo_ro_unref(self);
             return igloo_RO_NULL;
         }

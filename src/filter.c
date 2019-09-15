@@ -22,9 +22,9 @@ igloo_RO_PUBLIC_TYPE(igloo_filter_t,
         igloo_RO_TYPEDECL_FREE(igloo_interface_base_free)
         );
 
-igloo_filter_t * igloo_filter_new(const igloo_filter_ifdesc_t *ifdesc, igloo_ro_t backend_object, void *backend_userdata, const char *name, igloo_ro_t associated)
+igloo_filter_t * igloo_filter_new(const igloo_filter_ifdesc_t *ifdesc, igloo_ro_t backend_object, void *backend_userdata, const char *name, igloo_ro_t associated, igloo_ro_t instance)
 {
-    return igloo_interface_base_new(igloo_filter_t, ifdesc, backend_object, backend_userdata, name, associated);
+    return igloo_interface_base_new(igloo_filter_t, ifdesc, backend_object, backend_userdata, name, associated, instance);
 }
 
 igloo_filter_result_t igloo_filter_test(igloo_filter_t *filter, igloo_ro_t object)

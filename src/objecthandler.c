@@ -44,9 +44,9 @@ igloo_RO_PUBLIC_TYPE(igloo_objecthandler_t,
         igloo_RO_TYPEDECL_FREE(__free)
         );
 
-igloo_objecthandler_t * igloo_objecthandler_new(const igloo_objecthandler_ifdesc_t *ifdesc, igloo_ro_t backend_object, void *backend_userdata, const char *name, igloo_ro_t associated)
+igloo_objecthandler_t * igloo_objecthandler_new(const igloo_objecthandler_ifdesc_t *ifdesc, igloo_ro_t backend_object, void *backend_userdata, const char *name, igloo_ro_t associated, igloo_ro_t instance)
 {
-    igloo_objecthandler_t *handler = igloo_interface_base_new(igloo_objecthandler_t, ifdesc, backend_object, backend_userdata, name, associated);
+    igloo_objecthandler_t *handler = igloo_interface_base_new(igloo_objecthandler_t, ifdesc, backend_object, backend_userdata, name, associated, instance);
 
     if (!handler)
         return NULL;
@@ -134,7 +134,7 @@ int igloo_objecthandler_push_filter(igloo_objecthandler_t *handler, igloo_filter
 
     igloo_thread_rwlock_wlock(&(handler->rwlock));
     if (!handler->filter_list && handler->filter_a && handler->filter_b) {
-        handler->filter_list = igloo_ro_new(igloo_list_t);
+        handler->filter_list = igloo_ro_new_ext(igloo_list_t, NULL, igloo_RO_NULL, handler);
         if (!handler->filter_list) {
             igloo_thread_rwlock_unlock(&(handler->rwlock));
             return -1;

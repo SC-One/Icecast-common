@@ -105,7 +105,7 @@ typedef unsigned long int igloo_logmsg_opt_t;
  *  ...
  *      Parameters according to the format string.
  */
-igloo_logmsg_t * igloo_logmsg_new(const char *name, igloo_ro_t associated, const char *msgid, const char *cat, const char *func, const char *codefile, const ssize_t codeline, const struct timespec * ts, igloo_loglevel_t level, igloo_logmsg_opt_t options, igloo_list_t *referenced, const char *format, ...);
+igloo_logmsg_t * igloo_logmsg_new(const char *name, igloo_ro_t associated, igloo_ro_t instance, const char *msgid, const char *cat, const char *func, const char *codefile, const ssize_t codeline, const struct timespec * ts, igloo_loglevel_t level, igloo_logmsg_opt_t options, igloo_list_t *referenced, const char *format, ...);
 
 /* Get the context from a log message object.
  *
@@ -164,7 +164,7 @@ int igloo_logmsg_get_extra(igloo_logmsg_t *msg, igloo_logmsg_opt_t *options, igl
  *  name, associated
  *      See refobject_new().
  */
-igloo_objecthandler_t 	* igloo_logmsg_formarter(igloo_ro_t backend, const char *subformat, const char *name, igloo_ro_t associated);
+igloo_objecthandler_t 	* igloo_logmsg_formarter(igloo_ro_t backend, const char *subformat, const char *name, igloo_ro_t associated, igloo_ro_t instance);
 
 /* This creates a filter for log messages.
  * Parameters:
@@ -185,7 +185,7 @@ igloo_objecthandler_t 	* igloo_logmsg_formarter(igloo_ro_t backend, const char *
  *  name, associated
  *      See refobject_new().
  */
-igloo_filter_t 		* igloo_logmsg_filter(igloo_loglevel_t level_min, igloo_loglevel_t level_max, igloo_logmsg_opt_t options_required, igloo_logmsg_opt_t options_absent, const struct timespec * ts_min, const struct timespec * ts_max, const char *cat, const char *name, igloo_ro_t associated);
+igloo_filter_t 		* igloo_logmsg_filter(igloo_loglevel_t level_min, igloo_loglevel_t level_max, igloo_logmsg_opt_t options_required, igloo_logmsg_opt_t options_absent, const struct timespec * ts_min, const struct timespec * ts_max, const char *cat, const char *name, igloo_ro_t associated, igloo_ro_t instance);
 
 #ifdef __cplusplus
 }

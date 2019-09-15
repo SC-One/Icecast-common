@@ -88,7 +88,7 @@ typedef unsigned long int igloo_ro_cf_t;
  *  name, associated
  *      See igloo_ro_new().
  */
-typedef igloo_ro_t (*igloo_ro_clone_t)(igloo_ro_t self, igloo_ro_cf_t required, igloo_ro_cf_t allowed, const char *name, igloo_ro_t associated);
+typedef igloo_ro_t (*igloo_ro_clone_t)(igloo_ro_t self, igloo_ro_cf_t required, igloo_ro_cf_t allowed, const char *name, igloo_ro_t associated, igloo_ro_t instance);
 
 /* Type used for callback called when the object needs to be converted to another type.
  *
@@ -111,7 +111,7 @@ typedef igloo_ro_t (*igloo_ro_clone_t)(igloo_ro_t self, igloo_ro_cf_t required, 
  *  name, associated
  *      See igloo_ro_new().
  */
-typedef igloo_ro_t (*igloo_ro_convert_t)(igloo_ro_t self, const igloo_ro_type_t *type, igloo_ro_cf_t required, igloo_ro_cf_t allowed, const char *name, igloo_ro_t associated);
+typedef igloo_ro_t (*igloo_ro_convert_t)(igloo_ro_t self, const igloo_ro_type_t *type, igloo_ro_cf_t required, igloo_ro_cf_t allowed, const char *name, igloo_ro_t associated, igloo_ro_t instance);
 
 /* Type used for callback called when a specific interface to the object is requested.
  *
@@ -129,7 +129,7 @@ typedef igloo_ro_t (*igloo_ro_convert_t)(igloo_ro_t self, const igloo_ro_type_t 
  *  name, associated
  *      See igloo_ro_new().
  */
-typedef igloo_ro_t (*igloo_ro_get_interface_t)(igloo_ro_t self, const igloo_ro_type_t *type, const char *name, igloo_ro_t associated);
+typedef igloo_ro_t (*igloo_ro_get_interface_t)(igloo_ro_t self, const igloo_ro_type_t *type, const char *name, igloo_ro_t associated, igloo_ro_t instance);
 
 /* Type used to store flags for stringify operation.
  */
@@ -194,6 +194,10 @@ typedef enum {
  */
 typedef igloo_ro_cr_t (*igloo_ro_compare_t)(igloo_ro_t a, igloo_ro_t b);
 
+/* Type used for callback called when error value is requested from an object.
+ */
+typedef igloo_error_t (*igloo_ro_get_error_t)(igloo_ro_t self, igloo_error_t *result);
+
 /* Meta type used to defined types.
  * DO NOT use any of the members in here directly!
  */
@@ -232,6 +236,8 @@ struct igloo_ro_type_tag {
     igloo_ro_stringify_t        type_stringifycb;
     /* Callback to be called by igloo_ro_compare() */
     igloo_ro_compare_t          type_comparecb;
+    /* Callback to be called by igloo_ro_get_error() */
+    igloo_ro_get_error_t        type_get_errorcb;
 };
 struct igloo_ro_base_tag {
     /* Type of the object */
@@ -281,30 +287,33 @@ int             igloo_RO_HAS_TYPE_raw(igloo_ro_t object, const igloo_ro_type_t *
  * the associated refobject is given by associated.
  */
 
-igloo_ro_t      igloo_ro_new__raw(const igloo_ro_type_t *type, const char *name, igloo_ro_t associated);
-#define         igloo_ro_new_raw(type, name, associated)  igloo_RO_TO_TYPE(igloo_ro_new__raw(igloo_RO_GET_TYPE_BY_SYMBOL(type), (name), (associated)), type)
+igloo_ro_t      igloo_ro_new__raw(const igloo_ro_type_t *type, const char *name, igloo_ro_t associated, igloo_ro_t instance);
+#define         igloo_ro_new_raw(type, name, associated, instance)  igloo_RO_TO_TYPE(igloo_ro_new__raw(igloo_RO_GET_TYPE_BY_SYMBOL(type), (name), (associated), (instance)), type)
 
-igloo_ro_t      igloo_ro_new__simple(const igloo_ro_type_t *type, const char *name, igloo_ro_t associated, ...);
-#define         igloo_ro_new(type, ...)                         igloo_RO_TO_TYPE(igloo_ro_new__simple(igloo_RO_GET_TYPE_BY_SYMBOL(type), NULL, igloo_RO_NULL, ## __VA_ARGS__), type)
-#define         igloo_ro_new_ext(type, name, associated, ...)   igloo_RO_TO_TYPE(igloo_ro_new__simple(igloo_RO_GET_TYPE_BY_SYMBOL(type), (name), (associated), ## __VA_ARGS__), type)
+igloo_ro_t      igloo_ro_new__simple(const igloo_ro_type_t *type, const char *name, igloo_ro_t associated, igloo_ro_t instance, ...);
+#define         igloo_ro_new(type, ...)                         igloo_RO_TO_TYPE(igloo_ro_new__simple(igloo_RO_GET_TYPE_BY_SYMBOL(type), NULL, igloo_RO_NULL, igloo_RO_NULL, ## __VA_ARGS__), type)
+#define         igloo_ro_new_ext(type, name, associated, instance, ...)   igloo_RO_TO_TYPE(igloo_ro_new__simple(igloo_RO_GET_TYPE_BY_SYMBOL(type), (name), (associated), (instance), ## __VA_ARGS__), type)
 
 /* This increases the reference counter of the object */
-int             igloo_ro_ref(igloo_ro_t self);
+igloo_error_t   igloo_ro_ref(igloo_ro_t self);
 /* This decreases the reference counter of the object.
  * If the object's reference counter reaches zero the object is freed.
  */
-int             igloo_ro_unref(igloo_ro_t self);
+igloo_error_t   igloo_ro_unref(igloo_ro_t self);
 
 /* This is the same as igloo_ro_ref() and igloo_ro_unref() but increases/decreases the weak reference counter. */
-int             igloo_ro_weak_ref(igloo_ro_t self);
-int             igloo_ro_weak_unref(igloo_ro_t self);
+igloo_error_t   igloo_ro_weak_ref(igloo_ro_t self);
+igloo_error_t   igloo_ro_weak_unref(igloo_ro_t self);
 
 /* This gets the object's name */
 const char *    igloo_ro_get_name(igloo_ro_t self);
 
 /* This gets the object's associated object. */
 igloo_ro_t      igloo_ro_get_associated(igloo_ro_t self);
-int             igloo_ro_set_associated(igloo_ro_t self, igloo_ro_t associated);
+igloo_error_t   igloo_ro_set_associated(igloo_ro_t self, igloo_ro_t associated);
+
+/* This gets the object's instance object. */
+igloo_ro_t      igloo_ro_get_instance(igloo_ro_t self);
 
 /* Clone the given object returning a copy of it.
  *
@@ -345,7 +354,9 @@ igloo_ro_t      igloo_ro_clone(igloo_ro_t self, igloo_ro_cf_t required, igloo_ro
  *  name, associated
  *      See igloo_ro_new().
  */
-igloo_ro_t      igloo_ro_convert(igloo_ro_t self, const igloo_ro_type_t *type, igloo_ro_cf_t required, igloo_ro_cf_t allowed, const char *name, igloo_ro_t associated);
+igloo_ro_t      igloo_ro_convert_ext(igloo_ro_t self, const igloo_ro_type_t *type, igloo_ro_cf_t required, igloo_ro_cf_t allowed, const char *name, igloo_ro_t associated);
+igloo_ro_t      igloo_ro_convert_simple(igloo_ro_t self, const igloo_ro_type_t *type, igloo_ro_cf_t required, igloo_ro_cf_t allowed);
+#define         igloo_ro_convert(self, type) igloo_RO_TO_TYPE(igloo_ro_convert_simple((self), igloo_RO_GET_TYPE_BY_SYMBOL(type), igloo_RO_CF_NONE, igloo_RO_CF_NONE), type)
 
 /* Request a specific interface from the object.
  *
@@ -364,7 +375,8 @@ igloo_ro_t      igloo_ro_convert(igloo_ro_t self, const igloo_ro_type_t *type, i
  * Returns:
  *  An object that represents the given interface or igloo_RO_NULL.
  */
-igloo_ro_t igloo_ro_get_interface(igloo_ro_t self, const igloo_ro_type_t *type, const char *name, igloo_ro_t associated);
+igloo_ro_t igloo_ro_get_interface_ext(igloo_ro_t self, const igloo_ro_type_t *type, const char *name, igloo_ro_t associated);
+#define igloo_ro_get_interface(self, type) igloo_RO_TO_TYPE(igloo_ro_get_interface_ext((self), igloo_RO_GET_TYPE_BY_SYMBOL(type), NULL, igloo_RO_NULL), type)
 
 /* Convert a object to a string.
  * This is used for debugging and presenting to the user.
@@ -391,6 +403,19 @@ char *          igloo_ro_stringify(igloo_ro_t self, igloo_ro_sy_t flags);
  *  Thre result of the compare. See igloo_ro_cr_t.
  */
 igloo_ro_cr_t   igloo_ro_compare(igloo_ro_t a, igloo_ro_t b);
+
+/* Get error value from a object.
+ *
+ * Parameters:
+ *  self
+ *      The Object to request error value from.
+ *  result
+ *      Pointer to the location the error value should be stored.
+ *      The value is only written if igloo_ERROR_NONE is returned.
+ * Returns:
+ *  The result of the query.
+ */
+igloo_error_t igloo_ro_get_error(igloo_ro_t self, igloo_error_t *result);
 
 #ifdef __cplusplus
 }

@@ -60,7 +60,7 @@ static const igloo_io_ifdesc_t igloo_stdio_ifdesc = {
     .get_fd_for_systemcall = __get_fd_for_systemcall
 };
 
-igloo_io_t * igloo_stdio_new_file(const char *filename, const char *mode, const char *name, igloo_ro_t associated)
+igloo_io_t * igloo_stdio_new_file(const char *filename, const char *mode, const char *name, igloo_ro_t associated, igloo_ro_t instance)
 {
     FILE *file = fopen(filename, mode);
     igloo_io_t *io;
@@ -68,7 +68,7 @@ igloo_io_t * igloo_stdio_new_file(const char *filename, const char *mode, const 
     if (!file)
         return NULL;
 
-    io = igloo_io_new(&igloo_stdio_ifdesc, igloo_RO_NULL, file, name, associated);
+    io = igloo_io_new(&igloo_stdio_ifdesc, igloo_RO_NULL, file, name, associated, instance);
     if (!io) {
         fclose(file);
         return io;

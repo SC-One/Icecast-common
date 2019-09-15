@@ -16,6 +16,7 @@
 
 #include <igloo/logmsg.h>
 #include <igloo/filter.h>
+#include <igloo/error.h>
 
 static void test_create_unref(void)
 {
@@ -23,17 +24,17 @@ static void test_create_unref(void)
     igloo_objecthandler_t *formater;
     igloo_filter_t *filter;
 
-    msg = igloo_logmsg_new(NULL, igloo_RO_NULL, NULL, NULL, NULL, NULL, -1, NULL, igloo_LOGLEVEL__NONE, igloo_LOGMSG_OPT_NONE, NULL, "test");
+    msg = igloo_logmsg_new(NULL, igloo_RO_NULL, igloo_RO_NULL, NULL, NULL, NULL, NULL, -1, NULL, igloo_LOGLEVEL__NONE, igloo_LOGMSG_OPT_NONE, NULL, "test");
     ctest_test("logmsg created", !igloo_RO_IS_NULL(msg));
-    ctest_test("un-referenced", igloo_ro_unref(msg) == 0);
+    ctest_test("un-referenced", igloo_ro_unref(msg) == igloo_ERROR_NONE);
 
-    formater = igloo_logmsg_formarter(igloo_RO_NULL, NULL, NULL, igloo_RO_NULL);
+    formater = igloo_logmsg_formarter(igloo_RO_NULL, NULL, NULL, igloo_RO_NULL, igloo_RO_NULL);
     ctest_test("formater created", !igloo_RO_IS_NULL(formater));
-    ctest_test("un-referenced", igloo_ro_unref(formater) == 0);
+    ctest_test("un-referenced", igloo_ro_unref(formater) == igloo_ERROR_NONE);
 
-    filter = igloo_logmsg_filter(igloo_LOGLEVEL__NONE, igloo_LOGLEVEL__NONE, igloo_LOGMSG_OPT_NONE, igloo_LOGMSG_OPT_NONE, NULL, NULL, NULL, NULL, igloo_RO_NULL);
+    filter = igloo_logmsg_filter(igloo_LOGLEVEL__NONE, igloo_LOGLEVEL__NONE, igloo_LOGMSG_OPT_NONE, igloo_LOGMSG_OPT_NONE, NULL, NULL, NULL, NULL, igloo_RO_NULL, igloo_RO_NULL);
     ctest_test("filter created", !igloo_RO_IS_NULL(filter));
-    ctest_test("un-referenced", igloo_ro_unref(filter) == 0);
+    ctest_test("un-referenced", igloo_ro_unref(filter) == igloo_ERROR_NONE);
 }
 
 static void test_logmsg(void)
@@ -48,7 +49,7 @@ static void test_logmsg(void)
     igloo_list_t *referenced_out;
     int ret;
 
-    msg = igloo_logmsg_new("name", igloo_RO_NULL, "msgid", "cat", "func", "codefile", 13374242, &tv_in, igloo_LOGLEVEL_INFO, igloo_LOGMSG_OPT_ASKACK, NULL, "test %i %s", 5, "msg");
+    msg = igloo_logmsg_new("name", igloo_RO_NULL, igloo_RO_NULL, "msgid", "cat", "func", "codefile", 13374242, &tv_in, igloo_LOGLEVEL_INFO, igloo_LOGMSG_OPT_ASKACK, NULL, "test %i %s", 5, "msg");
     ctest_test("logmsg created", !igloo_RO_IS_NULL(msg));
 
     ctest_test("got context", (ret = igloo_logmsg_get_context(msg, &msgid_out, &cat_out, &func_out, &codefile_out, &codeline_out, &tv_out)) == 0);
@@ -86,7 +87,7 @@ static void test_logmsg(void)
         ctest_test("got referenced", 0);
     }
 
-    ctest_test("un-referenced", igloo_ro_unref(msg) == 0);
+    ctest_test("un-referenced", igloo_ro_unref(msg) == igloo_ERROR_NONE);
 }
 
 static void test_filter(void)
@@ -95,25 +96,25 @@ static void test_filter(void)
     igloo_logmsg_t *msg;
     igloo_ro_base_t *base;
 
-    filter = igloo_logmsg_filter(igloo_LOGLEVEL_ERROR, igloo_LOGLEVEL_WARN, igloo_LOGMSG_OPT_NONE, igloo_LOGMSG_OPT_NONE, NULL, NULL, NULL, NULL, igloo_RO_NULL);
+    filter = igloo_logmsg_filter(igloo_LOGLEVEL_ERROR, igloo_LOGLEVEL_WARN, igloo_LOGMSG_OPT_NONE, igloo_LOGMSG_OPT_NONE, NULL, NULL, NULL, NULL, igloo_RO_NULL, igloo_RO_NULL);
     ctest_test("filter created", !igloo_RO_IS_NULL(filter));
 
     base = igloo_ro_new(igloo_ro_base_t);
     ctest_test("base created", base != NULL);
     ctest_test("droping base", igloo_filter_test(filter, base) == igloo_FILTER_RESULT_DROP);
-    ctest_test("base un-referenced", igloo_ro_unref(base) == 0);
+    ctest_test("base un-referenced", igloo_ro_unref(base) == igloo_ERROR_NONE);
 
-    msg = igloo_logmsg_new(NULL, igloo_RO_NULL, NULL, NULL, NULL, NULL, -1, NULL, igloo_LOGLEVEL_INFO, igloo_LOGMSG_OPT_NONE, NULL, "test");
+    msg = igloo_logmsg_new(NULL, igloo_RO_NULL, igloo_RO_NULL, NULL, NULL, NULL, NULL, -1, NULL, igloo_LOGLEVEL_INFO, igloo_LOGMSG_OPT_NONE, NULL, "test");
     ctest_test("logmsg created", !igloo_RO_IS_NULL(msg));
     ctest_test("droping logmsg", igloo_filter_test(filter, msg) == igloo_FILTER_RESULT_DROP);
-    ctest_test("un-referenced", igloo_ro_unref(msg) == 0);
+    ctest_test("un-referenced", igloo_ro_unref(msg) == igloo_ERROR_NONE);
 
-    msg = igloo_logmsg_new(NULL, igloo_RO_NULL, NULL, NULL, NULL, NULL, -1, NULL, igloo_LOGLEVEL_WARN, igloo_LOGMSG_OPT_NONE, NULL, "test");
+    msg = igloo_logmsg_new(NULL, igloo_RO_NULL, igloo_RO_NULL, NULL, NULL, NULL, NULL, -1, NULL, igloo_LOGLEVEL_WARN, igloo_LOGMSG_OPT_NONE, NULL, "test");
     ctest_test("logmsg created", !igloo_RO_IS_NULL(msg));
     ctest_test("passing logmsg", igloo_filter_test(filter, msg) == igloo_FILTER_RESULT_PASS);
-    ctest_test("un-referenced", igloo_ro_unref(msg) == 0);
+    ctest_test("un-referenced", igloo_ro_unref(msg) == igloo_ERROR_NONE);
 
-    ctest_test("un-referenced", igloo_ro_unref(filter) == 0);
+    ctest_test("un-referenced", igloo_ro_unref(filter) == igloo_ERROR_NONE);
 }
 
 int main (void)

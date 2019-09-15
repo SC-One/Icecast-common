@@ -15,6 +15,7 @@
 #include "ctest_lib.h"
 
 #include <igloo/reportxml.h>
+#include <igloo/error.h>
 
 static void test_create_unref(void)
 {
@@ -24,15 +25,15 @@ static void test_create_unref(void)
 
     report = igloo_ro_new(igloo_reportxml_t);
     ctest_test("report created", !igloo_RO_IS_NULL(report));
-    ctest_test("un-referenced", igloo_ro_unref(report) == 0);
+    ctest_test("un-referenced", igloo_ro_unref(report) == igloo_ERROR_NONE);
 
-    node = igloo_reportxml_node_new(igloo_REPORTXML_NODE_TYPE_REPORT, NULL, NULL, NULL);
+    node = igloo_reportxml_node_new(igloo_REPORTXML_NODE_TYPE_REPORT, NULL, NULL, NULL, igloo_RO_NULL);
     ctest_test("node created", !igloo_RO_IS_NULL(node));
-    ctest_test("un-referenced", igloo_ro_unref(node) == 0);
+    ctest_test("un-referenced", igloo_ro_unref(node) == igloo_ERROR_NONE);
 
     database = igloo_ro_new(igloo_reportxml_database_t);
     ctest_test("database created", !igloo_RO_IS_NULL(database));
-    ctest_test("un-referenced", igloo_ro_unref(database) == 0);
+    ctest_test("un-referenced", igloo_ro_unref(database) == igloo_ERROR_NONE);
 }
 
 int main (void)
