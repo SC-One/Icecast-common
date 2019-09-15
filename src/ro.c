@@ -113,6 +113,9 @@ igloo_ro_t      igloo_ro_new__raw(const igloo_ro_type_t *type, const char *name,
         }
 
         base->instance = instance;
+    } else {
+        if (!igloo_IS_INSTANCE_TYPE(type))
+            base->instance = igloo_get_default_instance();
     }
 
     return (igloo_ro_t)base;

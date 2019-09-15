@@ -38,7 +38,8 @@ void igloo_log_shutdown(void);
 
 /* Instance type internal forwarding */
 const igloo_ro_type_t **igloo_instance_type;
-#define igloo_IS_INSTANCE(x) (igloo_RO_GET_TYPE((x)) == *igloo_instance_type)
+#define igloo_IS_INSTANCE(x)        (igloo_RO_GET_TYPE((x)) == *igloo_instance_type)
+#define igloo_IS_INSTANCE_TYPE(x)   ((x) == *igloo_instance_type)
 
 /* Basic interface */
 #define igloo_interface_base(type) \
@@ -66,5 +67,7 @@ igloo_ro_t igloo_interface_base_new_real(const igloo_ro_type_t *type, size_t des
 size_t igloo_private__vsnprintf_Hstrlen(const char *str, int is_alt, int allow_space);
 void igloo_private__vsnprintf(char *str, size_t size, const char *format, va_list ap);
 void igloo_private__snprintf(char *str, size_t size, const char *format, ...);
+
+igloo_ro_t igloo_get_default_instance(void);
 
 #endif
