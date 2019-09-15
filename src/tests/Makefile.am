@@ -16,6 +16,14 @@ check_PROGRAMS =
 libice_ctest_la_SOURCES = %reldir%/ctest_lib.c %reldir%/ctest_lib.h
 noinst_LTLIBRARIES = libice_ctest.la
 
+base_source_ro = src/ro.o \
+		 src/libigloo.o \
+		 src/private.o \
+		 thread/libicethread.la \
+		 net/libicenet.la \
+		 log/libicelog.la
+
+
 #
 # Test programs
 #
@@ -26,27 +34,21 @@ check_PROGRAMS += ctest_suite.test
 
 ctest_refobject_test_SOURCES = %reldir%/ctest_refobject.c
 ctest_refobject_test_LDADD = libice_ctest.la \
-			     thread/libicethread.la \
 			     avl/libiceavl.la \
-			     src/ro.o \
-			     src/private.o
+			     $(base_source_ro)
 check_PROGRAMS += ctest_refobject.test
 
 ctest_buffer_test_SOURCES = %reldir%/ctest_buffer.c
 ctest_buffer_test_LDADD = libice_ctest.la \
-			  thread/libicethread.la \
 			  avl/libiceavl.la \
-			  src/ro.o \
-			  src/private.o \
+			  $(base_source_ro) \
 			  src/buffer.o
 check_PROGRAMS += ctest_buffer.test
 
 ctest_list_test_SOURCES = %reldir%/ctest_list.c
 ctest_list_test_LDADD = libice_ctest.la \
-			thread/libicethread.la \
 			avl/libiceavl.la \
-			src/ro.o \
-			src/private.o \
+			$(base_source_ro) \
 			src/objecthandler.o \
 			src/filter.o \
 			src/interface.o \
@@ -55,22 +57,15 @@ check_PROGRAMS += ctest_list.test
 
 ctest_reportxml_test_SOURCES = %reldir%/ctest_reportxml.c
 ctest_reportxml_test_LDADD = libice_ctest.la \
-			thread/libicethread.la \
 			avl/libiceavl.la \
-			net/libicenet.la \
-			log/libicelog.la \
-			src/libigloo.o \
-			src/ro.o \
-			src/private.o \
+			$(base_source_ro) \
 			src/reportxml.o
 check_PROGRAMS += ctest_reportxml.test
 
 ctest_logmsg_test_SOURCES = %reldir%/ctest_logmsg.c
 ctest_logmsg_test_LDADD = libice_ctest.la \
-			thread/libicethread.la \
 			avl/libiceavl.la \
-			src/ro.o \
-			src/private.o \
+			$(base_source_ro) \
 			src/io.o \
 			src/list.o \
 			src/interface.o \
