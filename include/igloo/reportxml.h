@@ -86,7 +86,7 @@ igloo_reportxml_node_t *      igloo_reportxml_get_node_by_attribute(igloo_report
 /* This gets a node by it's type. Otherwise identical to igloo_reportxml_get_node_by_attribute() */
 igloo_reportxml_node_t *      igloo_reportxml_get_node_by_type(igloo_reportxml_t *report, igloo_reportxml_node_type_t type, int include_definitions);
 /* This function parses an XML document and returns the parst report XML document */
-igloo_reportxml_t *           igloo_reportxml_parse_xmldoc(xmlDocPtr doc);
+igloo_reportxml_t *           igloo_reportxml_parse_xmldoc(xmlDocPtr doc, igloo_ro_t instance);
 /* This function renders an report XML document as XML structure */
 xmlDocPtr               igloo_reportxml_render_xmldoc(igloo_reportxml_t *report);
 
@@ -98,9 +98,9 @@ xmlDocPtr               igloo_reportxml_render_xmldoc(igloo_reportxml_t *report)
 /* This creates a new node of type type.
  * It's id, definition, and akindof attributes can be given as parameters.
  */
-igloo_reportxml_node_t *      igloo_reportxml_node_new(igloo_reportxml_node_type_t type, const char *id, const char *definition, const char *akindof);
+igloo_reportxml_node_t *      igloo_reportxml_node_new(igloo_reportxml_node_type_t type, const char *id, const char *definition, const char *akindof, igloo_ro_t instance);
 /* This parses an XML node and returns the resulting report XML node */
-igloo_reportxml_node_t *      igloo_reportxml_node_parse_xmlnode(xmlNodePtr xmlnode);
+igloo_reportxml_node_t *      igloo_reportxml_node_parse_xmlnode(xmlNodePtr xmlnode, igloo_ro_t instance);
 /* Copy an report XML node (and it's children) */
 igloo_reportxml_node_t *      igloo_reportxml_node_copy(igloo_reportxml_node_t *node);
 /* Renders an report XML node as XML node */

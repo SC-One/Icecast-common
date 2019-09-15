@@ -27,7 +27,7 @@ static void test_create_unref(void)
     ctest_test("report created", !igloo_RO_IS_NULL(report));
     ctest_test("un-referenced", igloo_ro_unref(report) == igloo_ERROR_NONE);
 
-    node = igloo_reportxml_node_new(igloo_REPORTXML_NODE_TYPE_REPORT, NULL, NULL, NULL);
+    node = igloo_reportxml_node_new(igloo_REPORTXML_NODE_TYPE_REPORT, NULL, NULL, NULL, igloo_RO_NULL);
     ctest_test("node created", !igloo_RO_IS_NULL(node));
     ctest_test("un-referenced", igloo_ro_unref(node) == igloo_ERROR_NONE);
 

@@ -257,7 +257,7 @@ static void __report_free(igloo_ro_t self)
 static int  __report_new(igloo_ro_t self, const igloo_ro_type_t *type, va_list ap)
 {
     igloo_reportxml_t *ret = igloo_RO_TO_TYPE(self, igloo_reportxml_t);
-    igloo_reportxml_node_t *root = igloo_reportxml_node_new(igloo_REPORTXML_NODE_TYPE_REPORT, NULL, NULL, NULL);
+    igloo_reportxml_node_t *root = igloo_reportxml_node_new(igloo_REPORTXML_NODE_TYPE_REPORT, NULL, NULL, NULL, self);
 
     if (!root)
         return -1;
@@ -310,7 +310,7 @@ igloo_reportxml_node_t *      igloo_reportxml_get_node_by_type(igloo_reportxml_t
     return igloo_reportxml_node_get_child_by_type(report->root, type, include_definitions);
 }
 
-igloo_reportxml_t *           igloo_reportxml_parse_xmldoc(xmlDocPtr doc)
+igloo_reportxml_t *           igloo_reportxml_parse_xmldoc(xmlDocPtr doc, igloo_ro_t instance)
 {
     igloo_reportxml_node_t *root;
     igloo_reportxml_t *ret;
@@ -323,7 +323,7 @@ igloo_reportxml_t *           igloo_reportxml_parse_xmldoc(xmlDocPtr doc)
     if (!xmlroot)
         return NULL;
 
-    root = igloo_reportxml_node_parse_xmlnode(xmlroot);
+    root = igloo_reportxml_node_parse_xmlnode(xmlroot, instance);
     if (!root)
         return NULL;
 
@@ -384,7 +384,7 @@ static void __report_node_free(igloo_ro_t self)
     free(node->xml_childs);
 }
 
-igloo_reportxml_node_t *      igloo_reportxml_node_new(igloo_reportxml_node_type_t type, const char *id, const char *definition, const char *akindof)
+igloo_reportxml_node_t *      igloo_reportxml_node_new(igloo_reportxml_node_type_t type, const char *id, const char *definition, const char *akindof, igloo_ro_t instance)
 {
     igloo_reportxml_node_t *ret;
     const struct nodedef *nodedef = __get_nodedef(type);
@@ -393,7 +393,7 @@ igloo_reportxml_node_t *      igloo_reportxml_node_new(igloo_reportxml_node_type
     if (!nodedef)
         return NULL;
 
-    ret = igloo_ro_new_raw(igloo_reportxml_node_t, NULL, igloo_RO_NULL, igloo_RO_NULL);
+    ret = igloo_ro_new_raw(igloo_reportxml_node_t, NULL, igloo_RO_NULL, instance);
 
     if (ret == NULL)
         return NULL;
@@ -435,7 +435,7 @@ igloo_reportxml_node_t *      igloo_reportxml_node_new(igloo_reportxml_node_type
     return ret;
 }
 
-igloo_reportxml_node_t *      igloo_reportxml_node_parse_xmlnode(xmlNodePtr xmlnode)
+igloo_reportxml_node_t *      igloo_reportxml_node_parse_xmlnode(xmlNodePtr xmlnode, igloo_ro_t instance)
 {
     igloo_reportxml_node_t *node;
 
@@ -449,7 +449,7 @@ igloo_reportxml_node_t *      igloo_reportxml_node_parse_xmlnode(xmlNodePtr xmln
         return NULL;
     }
 
-    node = igloo_reportxml_node_new(nodedef->type, NULL, NULL, NULL);
+    node = igloo_reportxml_node_new(nodedef->type, NULL, NULL, NULL, instance);
     if (!node)
         return NULL;
 
@@ -507,7 +507,7 @@ igloo_reportxml_node_t *      igloo_reportxml_node_parse_xmlnode(xmlNodePtr xmln
                     continue;
                 }
 
-                child = igloo_reportxml_node_parse_xmlnode(cur);
+                child = igloo_reportxml_node_parse_xmlnode(cur, instance);
                 if (!child) {
                     igloo_ro_unref(node);
                     return NULL;
@@ -544,7 +544,7 @@ static igloo_reportxml_node_t *      __reportxml_node_copy_with_db(igloo_reportx
     if (xml_child_count < 0)
         return NULL;
 
-    ret = igloo_reportxml_node_parse_xmlnode(node->xmlnode);
+    ret = igloo_reportxml_node_parse_xmlnode(node->xmlnode, node);
     if (!ret)
         return NULL;
 
@@ -1133,7 +1133,7 @@ static igloo_reportxml_node_t *      __reportxml_database_build_node_ext(igloo_r
     if (!depth)
         return NULL;
 
-    search = igloo_reportxml_node_new(igloo_REPORTXML_NODE_TYPE_DEFINITION, NULL, NULL, NULL);
+    search = igloo_reportxml_node_new(igloo_REPORTXML_NODE_TYPE_DEFINITION, NULL, NULL, NULL, db);
     if (!search)
         return NULL;
 
@@ -1176,7 +1176,7 @@ static igloo_reportxml_node_t *      __reportxml_database_build_node_ext(igloo_r
             ret = NULL;
         }
     } else {
-        ret = igloo_reportxml_node_new(igloo_REPORTXML_NODE_TYPE_DEFINITION, NULL, NULL, NULL);
+        ret = igloo_reportxml_node_new(igloo_REPORTXML_NODE_TYPE_DEFINITION, NULL, NULL, NULL, db);
     }
 
     if (!ret) {
@@ -1329,7 +1329,7 @@ igloo_reportxml_t *           igloo_reportxml_database_build_report(igloo_report
     if (type == igloo_REPORTXML_NODE_TYPE_INCIDENT) {
         igloo_ro_ref(attach_to = root);
     } else if (type == igloo_REPORTXML_NODE_TYPE_STATE) {
-        attach_to = igloo_reportxml_node_new(igloo_REPORTXML_NODE_TYPE_INCIDENT, NULL, NULL, NULL);
+        attach_to = igloo_reportxml_node_new(igloo_REPORTXML_NODE_TYPE_INCIDENT, NULL, NULL, NULL, db);
         if (attach_to) {
             if (igloo_reportxml_node_add_child(root, attach_to) != 0) {
                 igloo_ro_unref(attach_to);
