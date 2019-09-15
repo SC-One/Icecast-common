@@ -351,14 +351,17 @@ igloo_ro_t      igloo_ro_get_instance(igloo_ro_t self)
     } else {
         ret = base->instance;
     }
+    igloo_thread_mutex_unlock(&(base->lock));
 
+    /* We do this after unlock to avoid dead locks.
+     * This is valid as we have at least a weak ref to the target
+     */
     if (!igloo_RO_IS_NULL(ret)) {
         if (igloo_ro_ref(ret) != igloo_ERROR_NONE) {
             igloo_thread_mutex_unlock(&(base->lock));
             return igloo_RO_NULL;
         }
     }
-    igloo_thread_mutex_unlock(&(base->lock));
 
     return ret;
 }
