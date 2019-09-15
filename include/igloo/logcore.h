@@ -36,9 +36,16 @@ extern "C" {
 
 igloo_RO_FORWARD_TYPE(igloo_logcore_t);
 
+typedef enum {
+    igloo_LOGCORE_CLASS_ANY,
+    igloo_LOGCORE_CLASS_ALL,
+    igloo_LOGCORE_CLASS_DEFAULT
+} igloo_logcore_routingclass_t;
+
 typedef struct {
     char *id;
     char *filename;
+    igloo_logcore_routingclass_t routingclass;
     ssize_t recent_limit;
     igloo_filter_t *filter;
     igloo_objecthandler_t *formater;

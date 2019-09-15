@@ -54,6 +54,7 @@ static int __copy_output(igloo_logcore_output_t *dst, const igloo_logcore_output
     if (src->filename)
         dst->filename = strdup(src->filename);
     dst->recent_limit = src->recent_limit;
+    dst->routingclass = src->routingclass;
     igloo_ro_ref(dst->filter = src->filter);
     igloo_ro_ref(dst->formater = src->formater);
 
@@ -108,14 +109,16 @@ static void __free(igloo_ro_t self)
     igloo_thread_rwlock_destroy(&(core->rwlock));
 }
 
-static igloo_filter_result_t __push_msg(igloo_logcore_t *core, igloo_ro_t msg, int allow_askack)
+static igloo_filter_result_t __push_msg__output(igloo_logcore_t *core, igloo_ro_t msg, igloo_logcore_routingclass_t routingclass)
 {
     igloo_filter_result_t ret = igloo_FILTER_RESULT_DROP;
-    igloo_logmsg_t *logmsg;
     size_t i;
 
     for (i = 0; i < core->output_length; i++) {
         igloo_filter_result_t push = igloo_FILTER_RESULT_PASS;
+
+        if (core->output[i].routingclass != routingclass)
+            continue;
 
         if (core->output[i].filter)
             push = igloo_filter_test(core->output[i].filter, msg);
@@ -125,9 +128,36 @@ static igloo_filter_result_t __push_msg(igloo_logcore_t *core, igloo_ro_t msg, i
 
         igloo_list_push(core->output_recent[i], msg);
 
-        if (push == igloo_FILTER_RESULT_PASS)
-            ret = push;
+        if (push == igloo_FILTER_RESULT_PASS) {
+            switch (routingclass) {
+                case igloo_LOGCORE_CLASS_ANY:
+                case igloo_LOGCORE_CLASS_DEFAULT:
+                    return push;
+                break;
+                default:
+                    ret = push;
+                break;
+            }
+        }
     }
+
+    return ret;
+}
+
+static igloo_filter_result_t __push_msg(igloo_logcore_t *core, igloo_ro_t msg, int allow_askack)
+{
+    igloo_filter_result_t ret = igloo_FILTER_RESULT_DROP;
+    igloo_filter_result_t res;
+    igloo_logmsg_t *logmsg;
+
+    ret = __push_msg__output(core, msg, igloo_LOGCORE_CLASS_ANY);
+
+    if (ret != igloo_FILTER_RESULT_PASS)
+        ret = __push_msg__output(core, msg, igloo_LOGCORE_CLASS_DEFAULT);
+
+    res = __push_msg__output(core, msg, igloo_LOGCORE_CLASS_ALL);
+    if (res == igloo_FILTER_RESULT_PASS)
+        ret = igloo_FILTER_RESULT_PASS;
 
     if (ret == igloo_FILTER_RESULT_PASS)
         igloo_list_push(core->global_recent, msg);
