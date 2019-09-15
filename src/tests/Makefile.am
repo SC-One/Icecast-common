@@ -57,6 +57,9 @@ ctest_reportxml_test_SOURCES = %reldir%/ctest_reportxml.c
 ctest_reportxml_test_LDADD = libice_ctest.la \
 			thread/libicethread.la \
 			avl/libiceavl.la \
+			net/libicenet.la \
+			log/libicelog.la \
+			src/libigloo.o \
 			src/ro.o \
 			src/private.o \
 			src/reportxml.o
