@@ -113,6 +113,19 @@ igloo_objecthandler_t * igloo_instance_get_logger(igloo_ro_t self);
  */
 igloo_error_t igloo_instance_log(igloo_ro_t self, igloo_ro_t msg);
 
+/* Validate an instance.
+ *
+ * Note: This is very useful when a instance is passed from a user to a library.
+ *
+ * Parameters:
+ *  self
+ *      An instance to validate.
+ * Returns:
+ *  igloo_ERROR_NONE if self is a valid instance, or error code otherwise.
+ */
+igloo_error_t igloo_instance_validate_raw(igloo_ro_t self);
+#define igloo_instance_validate(x) igloo_instance_validate_raw((x))
+
 #ifdef __cplusplus
 }
 #endif

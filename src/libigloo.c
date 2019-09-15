@@ -241,3 +241,12 @@ igloo_error_t igloo_instance_log(igloo_ro_t self, igloo_ro_t msg)
 
     return ret;
 }
+
+igloo_error_t igloo_instance_validate_raw(igloo_ro_t self)
+{
+    if (igloo_RO_IS_VALID(self, igloo_instance_t)) {
+        return igloo_ERROR_NONE;
+    } else {
+        return igloo_ERROR_GENERIC;
+    }
+}
