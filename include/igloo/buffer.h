@@ -43,7 +43,7 @@ igloo_RO_FORWARD_TYPE(igloo_buffer_t);
  *  preallocation
  *      The number of bytes to allocate for use later on. See igloo_buffer_preallocate() for details.
  *  userdata, name, associated
- *      See refobject_new().
+ *      See igloo_ro_new().
  */
 igloo_buffer_t *  igloo_buffer_new(ssize_t preallocation, const char *name, igloo_ro_t associated, igloo_ro_t instance);
 
