@@ -23,6 +23,7 @@ pkginclude_HEADERS = \
     include/igloo/interface.h \
     include/igloo/io.h \
     include/igloo/socket.h \
+    include/igloo/socketaddr.h \
     include/igloo/stdio.h \
     include/igloo/filter.h \
     include/igloo/objecthandler.h \
@@ -40,6 +41,7 @@ libigloo_la_SOURCES = \
     src/ro.c \
     src/io.c \
     src/socket.c \
+    src/socketaddr.c \
     src/stdio.c \
     src/filter.c \
     src/objecthandler.c \

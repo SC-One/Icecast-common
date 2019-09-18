@@ -41,6 +41,7 @@ extern "C" {
 
 typedef struct igloo_io_tag igloo_io_t;
 typedef struct igloo_socket_tag igloo_socket_t;
+typedef struct igloo_socketaddr_tag igloo_socketaddr_t;
 typedef struct igloo_filter_tag igloo_filter_t;
 typedef struct igloo_objecthandler_tag igloo_objecthandler_t;
 typedef struct igloo_logmsg_tag igloo_logmsg_t;
@@ -72,6 +73,7 @@ typedef union __attribute__ ((__transparent_union__)) {
     igloo_RO_TYPE(igloo_ro_base_t)
     igloo_RO_TYPE(igloo_io_t)
     igloo_RO_TYPE(igloo_socket_t)
+    igloo_RO_TYPE(igloo_socketaddr_t)
     igloo_RO_TYPE(igloo_filter_t)
     igloo_RO_TYPE(igloo_objecthandler_t)
     igloo_RO_TYPE(igloo_logmsg_t)
