@@ -37,4 +37,4 @@ igloo_RO_FORWARD_TYPE(igloo_socket_t);
 }
 #endif
 
-#endif /* ! _LIBIGLOO__STDIO_H_ */
+#endif /* ! _LIBIGLOO__SOCKET_H_ */
