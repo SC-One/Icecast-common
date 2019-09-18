@@ -20,6 +20,7 @@
 #include <igloo/objecthandler.h>
 #include <igloo/logmsg.h>
 #include <igloo/stdio.h>
+#include <igloo/error.h>
 #include "private.h"
 
 struct igloo_logcore_tag {
@@ -175,7 +176,7 @@ static igloo_filter_result_t __push_msg(igloo_logcore_t *core, igloo_ro_t msg, i
     return ret;
 }
 
-int             igloo_logcore_configure(igloo_logcore_t *core, ssize_t recent_limit, ssize_t askack_limit, ssize_t output_recent_limit, const igloo_logcore_output_t *outputs, size_t outputs_len)
+igloo_error_t igloo_logcore_configure(igloo_logcore_t *core, ssize_t recent_limit, ssize_t askack_limit, ssize_t output_recent_limit, const igloo_logcore_output_t *outputs, size_t outputs_len)
 {
     igloo_list_t *global_recent;
     igloo_list_t *global_askack;
@@ -185,10 +186,10 @@ int             igloo_logcore_configure(igloo_logcore_t *core, ssize_t recent_li
     size_t i;
 
     if (!igloo_RO_IS_VALID(core, igloo_logcore_t))
-        return -1;
+        return igloo_ERROR_FAULT;
 
     if (outputs_len < 1 && !outputs)
-        return -1;
+        return igloo_ERROR_INVAL;
 
     if (recent_limit < 0)
         recent_limit = 128;
@@ -242,20 +243,20 @@ int             igloo_logcore_configure(igloo_logcore_t *core, ssize_t recent_li
 
     igloo_ro_unref(instance);
 
-    return 0;
+    return igloo_ERROR_NONE;
 }
 
-int             igloo_logcore_set_acknowledge_cb(igloo_logcore_t *core, igloo_logcore_acknowledge_t callback, void *userdata)
+igloo_error_t igloo_logcore_set_acknowledge_cb(igloo_logcore_t *core, igloo_logcore_acknowledge_t callback, void *userdata)
 {
     if (!igloo_RO_IS_VALID(core, igloo_logcore_t))
-        return -1;
+        return igloo_ERROR_FAULT;
 
     igloo_thread_rwlock_wlock(&(core->rwlock));
     core->acknowledge_cb = callback;
     core->acknowledge_cb_userdata = userdata;
     igloo_thread_rwlock_unlock(&(core->rwlock));
 
-    return 0;
+    return igloo_ERROR_NONE;
 }
 
 static igloo_list_t *__copy_filtered_list(igloo_list_t *list, const igloo_ro_type_t *type, igloo_filter_t *filter, ssize_t limit)
@@ -336,12 +337,12 @@ igloo_list_t *  igloo_logcore_get_askack(igloo_logcore_t *core, const igloo_ro_t
     return ret;
 }
 
-int             igloo_logcore_acknowledge(igloo_logcore_t *core, igloo_ro_t object)
+igloo_error_t igloo_logcore_acknowledge(igloo_logcore_t *core, igloo_ro_t object)
 {
     int ret;
 
     if (!igloo_RO_IS_VALID(core, igloo_logcore_t))
-        return -1;
+        return igloo_ERROR_FAULT;
 
     igloo_thread_rwlock_wlock(&(core->rwlock));
     ret = igloo_list_remove(core->global_askack, object);
@@ -355,7 +356,7 @@ int             igloo_logcore_acknowledge(igloo_logcore_t *core, igloo_ro_t obje
     }
 
     igloo_thread_rwlock_unlock(&(core->rwlock));
-    return ret;
+    return ret == 0 ? igloo_ERROR_NONE : igloo_ERROR_GENERIC;
 }
 
 static igloo_filter_result_t __handle(igloo_INTERFACE_BASIC_ARGS, igloo_ro_t object)

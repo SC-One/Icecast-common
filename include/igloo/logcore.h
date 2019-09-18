@@ -53,11 +53,11 @@ typedef struct {
 
 typedef igloo_ro_t (*igloo_logcore_acknowledge_t)(igloo_logcore_t *core, igloo_ro_t object, void *userdata);
 
-int             igloo_logcore_configure(igloo_logcore_t *core, ssize_t recent_limit, ssize_t askack_limit, ssize_t output_recent_limit, const igloo_logcore_output_t *outputs, size_t outputs_len);
-int             igloo_logcore_set_acknowledge_cb(igloo_logcore_t *core, igloo_logcore_acknowledge_t callback, void *userdata);
+igloo_error_t   igloo_logcore_configure(igloo_logcore_t *core, ssize_t recent_limit, ssize_t askack_limit, ssize_t output_recent_limit, const igloo_logcore_output_t *outputs, size_t outputs_len);
+igloo_error_t   igloo_logcore_set_acknowledge_cb(igloo_logcore_t *core, igloo_logcore_acknowledge_t callback, void *userdata);
 igloo_list_t *  igloo_logcore_get_recent(igloo_logcore_t *core, const igloo_ro_type_t *type, igloo_filter_t *filter, ssize_t limit, const char *id);
 igloo_list_t *  igloo_logcore_get_askack(igloo_logcore_t *core, const igloo_ro_type_t *type, igloo_filter_t *filter, ssize_t limit);
-int             igloo_logcore_acknowledge(igloo_logcore_t *core, igloo_ro_t object);
+igloo_error_t   igloo_logcore_acknowledge(igloo_logcore_t *core, igloo_ro_t object);
 
 #ifdef __cplusplus
 }
