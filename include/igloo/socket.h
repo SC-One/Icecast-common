@@ -32,6 +32,7 @@ extern "C" {
 #include <igloo/config.h>
 
 #include "types.h"
+#include "socketaddr.h"
 
 igloo_RO_FORWARD_TYPE(igloo_socket_t);
 
