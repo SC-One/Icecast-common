@@ -33,6 +33,8 @@ void igloo_sock_initialize(void);
 void igloo_sock_shutdown(void);
 void igloo_resolver_initialize(void);
 void igloo_resolver_shutdown(void);
+void igloo_socketaddr_initialize(void);
+void igloo_socketaddr_shutdown(void);
 void igloo_log_initialize(void);
 void igloo_log_shutdown(void);
 
