@@ -24,6 +24,7 @@
 #endif
 
 #include <igloo/interface.h>
+#include <igloo/socketaddr.h>
 
 /* init/shutdown of the library */
 void igloo_thread_initialize(void);
@@ -71,5 +72,9 @@ void igloo_private__vsnprintf(char *str, size_t size, const char *format, va_lis
 void igloo_private__snprintf(char *str, size_t size, const char *format, ...);
 
 igloo_ro_t igloo_get_default_instance(void);
+
+int igloo_socketaddr_get_sysid_domain(igloo_socketaddr_domain_t domain);
+int igloo_socketaddr_get_sysid_type(igloo_socketaddr_type_t type);
+int igloo_socketaddr_get_sysid_protocol(igloo_socketaddr_protocol_t protocol);
 
 #endif

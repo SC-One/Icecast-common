@@ -107,6 +107,82 @@ static inline igloo_error_t _replace_string(char **rep, const char *str)
     return igloo_ERROR_NONE;
 }
 
+int igloo_socketaddr_get_sysid_domain(igloo_socketaddr_domain_t domain)
+{
+    switch (domain) {
+        case igloo_SOCKETADDR_DOMAIN_UNSPEC:
+            return AF_UNSPEC;
+        break;
+        case igloo_SOCKETADDR_DOMAIN_UNIX:
+            return AF_UNIX;
+        break;
+        case igloo_SOCKETADDR_DOMAIN_INET4:
+            return AF_INET;
+        break;
+        case igloo_SOCKETADDR_DOMAIN_INET6:
+            return AF_INET6;
+        break;
+    }
+
+    return -1;
+}
+
+int igloo_socketaddr_get_sysid_type(igloo_socketaddr_type_t type)
+{
+    switch (type) {
+        case igloo_SOCKETADDR_TYPE_STREAM:
+            return SOCK_STREAM;
+        break;
+        case igloo_SOCKETADDR_TYPE_DGRAM:
+            return SOCK_DGRAM;
+        break;
+        case igloo_SOCKETADDR_TYPE_SEQPACK:
+            return SOCK_SEQPACKET;
+        break;
+#ifdef SOCK_RDM
+        case igloo_SOCKETADDR_TYPE_RDM:
+            return SOCK_RDM;
+        break;
+#endif
+        case igloo_SOCKETADDR_TYPE_UNSPEC:
+            return -1;
+    }
+
+    return -1;
+}
+
+int igloo_socketaddr_get_sysid_protocol(igloo_socketaddr_protocol_t protocol)
+{
+    switch (protocol) {
+        case igloo_SOCKETADDR_PROTOCOL_UNSPEC:
+            return 0;
+        break;
+        case igloo_SOCKETADDR_PROTOCOL_TCP:
+            return IPPROTO_TCP;
+        break;
+        case igloo_SOCKETADDR_PROTOCOL_UDP:
+            return IPPROTO_UDP;
+        break;
+#ifdef IPPROTO_DCCP
+        case igloo_SOCKETADDR_PROTOCOL_DCCP:
+            return IPPROTO_DCCP;
+        break;
+#endif
+#ifdef IPPROTO_SCTP
+        case igloo_SOCKETADDR_PROTOCOL_SCTP:
+            return IPPROTO_SCTP;
+        break;
+#endif
+#ifdef IPPROTO_UDPLITE
+        case igloo_SOCKETADDR_PROTOCOL_UDPLITE:
+            return IPPROTO_UDPLITE;
+        break;
+#endif
+    }
+
+    return -1;
+}
+
 #ifdef HAVE_INET_PTON
 static inline int _is_ip(const char *what)
 {
@@ -158,6 +234,38 @@ static const char *_get_ip(const char *name, char *buff, size_t len)
     return ret;
 }
 
+static igloo_error_t _get_service(igloo_socketaddr_t *addr, const char *name, uint16_t *port)
+{
+    struct addrinfo *head, hints;
+    igloo_error_t ret;
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = igloo_socketaddr_get_sysid_domain(addr->domain);
+    hints.ai_socktype = igloo_socketaddr_get_sysid_type(addr->type);
+    hints.ai_protocol = igloo_socketaddr_get_sysid_protocol(addr->protocol);
+
+    if (getaddrinfo(NULL, name, &hints, &head))
+        return igloo_ERROR_GENERIC;
+
+    if (head) {
+        ret = igloo_ERROR_NONE;
+        switch (head->ai_addr->sa_family) {
+            case AF_INET:
+                *port = ntohs(((struct sockaddr_in*)head->ai_addr)->sin_port);
+            break;
+            case AF_INET6:
+                *port = ntohs(((struct sockaddr_in6*)head->ai_addr)->sin6_port);
+            break;
+            default:
+                ret = igloo_ERROR_GENERIC;
+            break;
+        }
+        freeaddrinfo(head);
+        return ret;
+    }
+
+    return igloo_ERROR_GENERIC;
+}
 #else
 
 static const char *_get_ip(const char *name, char *buff, size_t len)
@@ -182,6 +290,45 @@ static const char *_get_ip(const char *name, char *buff, size_t len)
 
     return ret;
 }
+
+static igloo_error_t _get_service(igloo_socketaddr_t *addr, const char *name, uint16_t *port)
+{
+    const char *proto = NULL;
+    struct servent *res;
+    igloo_error_t ret = igloo_ERROR_GENERIC;
+
+    switch (addr->protocol) {
+        case igloo_SOCKETADDR_PROTOCOL_TCP:
+            proto = "tcp";
+        break;
+        case igloo_SOCKETADDR_PROTOCOL_UDP:
+            proto = "tcp";
+        break;
+        case igloo_SOCKETADDR_PROTOCOL_DCCP:
+            proto = "dccp";
+        break;
+        case igloo_SOCKETADDR_PROTOCOL_SCTP:
+            proto = "sctp";
+        break;
+        case igloo_SOCKETADDR_PROTOCOL_UDPLITE:
+            proto = "udplite";
+        break;
+        default:
+            return igloo_ERROR_INVAL;
+        break;
+    }
+
+    igloo_thread_mutex_lock(&igloo__resolver_mutex);
+    res = getservbyname(name, proto);
+    if (res) {
+        *port = ntohs(res->s_port);
+        ret = igloo_ERROR_NONE;
+    }
+    igloo_thread_mutex_unlock(&igloo__resolver_mutex);
+
+    return ret;
+}
+
 #endif
 
 igloo_socketaddr_t *    igloo_socketaddr_new(igloo_socketaddr_domain_t domain, igloo_socketaddr_type_t type, igloo_socketaddr_protocol_t protocol, const char *name, igloo_ro_t associated, igloo_ro_t instance)
@@ -279,6 +426,21 @@ igloo_error_t           igloo_socketaddr_get_port(igloo_socketaddr_t *addr, uint
         *port = addr->port;
 
     return igloo_ERROR_NONE;
+}
+
+igloo_error_t           igloo_socketaddr_set_service(igloo_socketaddr_t *addr, const char *service)
+{
+    igloo_error_t ret;
+    uint16_t port;
+
+    if (!igloo_RO_IS_VALID(addr, igloo_socketaddr_t))
+        return igloo_ERROR_FAULT;
+
+    ret = _get_service(addr, service, &port);
+    if (ret != igloo_ERROR_NONE)
+        return ret;
+
+    return igloo_socketaddr_set_port(addr, port);
 }
 
 igloo_error_t           igloo_socketaddr_set_path(igloo_socketaddr_t *addr, const char *path)

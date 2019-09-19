@@ -72,6 +72,7 @@ igloo_error_t           igloo_socketaddr_get_node(igloo_socketaddr_t *addr, cons
 igloo_error_t           igloo_socketaddr_get_ip  (igloo_socketaddr_t *addr, const char **ip);
 igloo_error_t           igloo_socketaddr_set_port(igloo_socketaddr_t *addr, uint16_t port);
 igloo_error_t           igloo_socketaddr_get_port(igloo_socketaddr_t *addr, uint16_t *port);
+igloo_error_t           igloo_socketaddr_set_service(igloo_socketaddr_t *addr, const char *service);
 igloo_error_t           igloo_socketaddr_set_path(igloo_socketaddr_t *addr, const char *path);
 igloo_error_t           igloo_socketaddr_get_path(igloo_socketaddr_t *addr, const char **path);
 
