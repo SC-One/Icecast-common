@@ -19,7 +19,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <stdio.h>
-
+#include <fcntl.h>
 #else
 #include <winsock2.h>
 #endif
@@ -62,17 +62,102 @@ static void __free(igloo_ro_t self)
 #endif
 }
 
+static ssize_t __read(igloo_INTERFACE_BASIC_ARGS, void *buffer, size_t len, igloo_error_t *error)
+{
+    igloo_socket_t *sock = igloo_RO_TO_TYPE(*backend_object, igloo_socket_t);
+    ssize_t ret = recv(sock->syssock, buffer, len, 0);
+
+    if (ret < 0) {
+        *error = igloo_ERROR_GENERIC;
+    } else {
+        *error = igloo_ERROR_NONE;
+    }
+
+    return ret;
+}
+static ssize_t __write(igloo_INTERFACE_BASIC_ARGS, const void *buffer, size_t len, igloo_error_t *error)
+{
+    igloo_socket_t *sock = igloo_RO_TO_TYPE(*backend_object, igloo_socket_t);
+    ssize_t ret = send(sock->syssock, buffer, len, MSG_NOSIGNAL);
+
+    if (ret < 0) {
+        *error = igloo_ERROR_GENERIC;
+    } else {
+        *error = igloo_ERROR_NONE;
+    }
+
+    return ret;
+}
+
+static igloo_error_t __sync(igloo_INTERFACE_BASIC_ARGS, igloo_io_opflag_t flags)
+{
+    return igloo_ERROR_NONE;
+}
+
+igloo_error_t __set_blockingmode(igloo_INTERFACE_BASIC_ARGS, libigloo_io_blockingmode_t mode) {
+    igloo_socket_t *sock = igloo_RO_TO_TYPE(*backend_object, igloo_socket_t);
+#ifdef _WIN32
+#ifdef __MINGW32__
+    u_long varblock = 1;
+#else
+    int varblock = 1;
+#endif
+#else
+    int flags;
+#endif
+
+#ifdef _WIN32
+    if (block)
+        varblock = 0;
+    return ioctlsocket(sock->syssock, FIONBIO, &varblock) == 0 ? igloo_ERROR_NONE : igloo_ERROR_GENERIC;
+#else
+    flags = fcntl(sock->syssock, F_GETFL);
+    if (flags == -1)
+        return igloo_ERROR_GENERIC;
+
+    flags |= O_NONBLOCK;
+    if (mode == igloo_IO_BLOCKINGMODE_FULL) {
+        flags -= O_NONBLOCK;
+    }
+
+    return fcntl(sock->syssock, F_SETFL, flags) == 0 ? igloo_ERROR_NONE : igloo_ERROR_GENERIC;
+#endif
+}
+
+static igloo_error_t __get_blockingmode(igloo_INTERFACE_BASIC_ARGS, libigloo_io_blockingmode_t *mode)
+{
+    igloo_socket_t *sock = igloo_RO_TO_TYPE(*backend_object, igloo_socket_t);
+    *mode = igloo_IO_BLOCKINGMODE_ERROR;
+    return igloo_ERROR_GENERIC;
+}
+
+static igloo_error_t __get_fd_for_systemcall(igloo_INTERFACE_BASIC_ARGS, int *fd)
+{
+    igloo_socket_t *sock = igloo_RO_TO_TYPE(*backend_object, igloo_socket_t);
+    *fd = sock->syssock;
+    return igloo_ERROR_NONE;
+}
+
+static const igloo_io_ifdesc_t igloo_socket_io_ifdesc = {
+    igloo_INTERFACE_DESCRIPTION_BASE(igloo_io_ifdesc_t),
+    .read = __read,
+    .write = __write,
+    .sync = __sync,
+    .get_blockingmode = __get_blockingmode,
+    .get_fd_for_systemcall = __get_fd_for_systemcall
+};
+
 static igloo_ro_t __get_interface_t(igloo_ro_t self, const igloo_ro_type_t *type, const char *name, igloo_ro_t associated, igloo_ro_t instance)
 {
-    igloo_socket_t *socket = igloo_RO_TO_TYPE(self, igloo_socket_t);
+    igloo_socket_t *sock = igloo_RO_TO_TYPE(self, igloo_socket_t);
 
-    if (!socket)
+    if (!sock)
         return igloo_RO_NULL;
 
     if (type != igloo_RO_GET_TYPE_BY_SYMBOL(igloo_io_t))
         return igloo_RO_NULL;
 
-    return igloo_RO_NULL;
+    return (igloo_ro_t)igloo_io_new(&igloo_socket_io_ifdesc, self, NULL, name, associated, instance);
 }
 
 static igloo_error_t __bind_or_connect(igloo_socket_t *sock, igloo_socketaddr_t *addr, int do_connect)
@@ -155,6 +240,7 @@ static igloo_error_t __bind_or_connect(igloo_socket_t *sock, igloo_socketaddr_t 
             } while (ret != 0 && (ai = ai->ai_next));
 
             freeaddrinfo(res);
+            already_done = 1;
         break;
         default:
             return igloo_ERROR_GENERIC;
