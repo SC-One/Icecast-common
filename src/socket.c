@@ -10,11 +10,37 @@
 #include <config.h>
 #endif
 
+#ifndef _WIN32
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
+#include <sys/un.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <stdio.h>
+
+#else
+#include <winsock2.h>
+#endif
+
 #include <igloo/socket.h>
 #include <igloo/io.h>
+#include <igloo/error.h>
+#include <igloo/list.h>
+#include "private.h"
 
 struct igloo_socket_tag {
     igloo_ro_base_t __base;
+
+    igloo_socketaddr_domain_t domain;
+    igloo_socketaddr_type_t type;
+    igloo_socketaddr_protocol_t protocol;
+
+    igloo_socketaddr_t *local_physical;
+    igloo_socketaddr_t *peer_physical;
+
+    int syssock;
 };
 
 static void __free(igloo_ro_t self);
@@ -27,6 +53,13 @@ igloo_RO_PUBLIC_TYPE(igloo_socket_t,
 
 static void __free(igloo_ro_t self)
 {
+    igloo_socket_t *sock = igloo_RO_TO_TYPE(self, igloo_socket_t);
+
+#ifndef _WIN32
+    close(sock->syssock);
+#else
+    closesocket(sock->syssock);
+#endif
 }
 
 static igloo_ro_t __get_interface_t(igloo_ro_t self, const igloo_ro_type_t *type, const char *name, igloo_ro_t associated, igloo_ro_t instance)
@@ -42,3 +75,350 @@ static igloo_ro_t __get_interface_t(igloo_ro_t self, const igloo_ro_type_t *type
     return igloo_RO_NULL;
 }
 
+static igloo_error_t __bind_or_connect(igloo_socket_t *sock, igloo_socketaddr_t *addr, int do_connect)
+{
+    union {
+        struct sockaddr sa;
+        struct sockaddr_un un;
+    } sysaddr_store;
+    struct sockaddr *sa;
+    socklen_t sa_len;
+    igloo_socketaddr_domain_t domain;
+    igloo_socketaddr_type_t type;
+    igloo_socketaddr_protocol_t protocol;
+    igloo_error_t error;
+    int sysaf;
+    const char *value;
+    uint16_t port;
+    struct addrinfo hints, *res, *ai;
+    char service[10];
+    int already_done = 0;
+    int ret = -1;
+
+    memset(&sysaddr_store, 0, sizeof(sysaddr_store));
+
+    error = igloo_socketaddr_get_base(addr, &domain, &type, &protocol);
+    if (error != igloo_ERROR_NONE)
+        return error;
+
+    sysaf = igloo_socketaddr_get_sysid_domain(domain);
+
+    switch (domain) {
+        case igloo_SOCKETADDR_DOMAIN_UNIX:
+            error = igloo_socketaddr_get_path(addr, &value);
+            if (error != igloo_ERROR_NONE)
+                return error;
+
+            if (!value || strlen(value) > sizeof(sysaddr_store.un.sun_path))
+                return igloo_ERROR_GENERIC;
+
+            sysaddr_store.un.sun_family = sysaf;
+            strncpy(sysaddr_store.un.sun_path, value, sizeof(sysaddr_store.un.sun_path));
+            sa_len = sizeof(sysaddr_store.un);
+            sa = &(sysaddr_store.sa);
+        break;
+        case igloo_SOCKETADDR_DOMAIN_INET4:
+        case igloo_SOCKETADDR_DOMAIN_INET6:
+            error = igloo_socketaddr_get_ip(addr, &value);
+            if (error != igloo_ERROR_NONE)
+                return error;
+
+            error = igloo_socketaddr_get_port(addr, &port);
+            if (error != igloo_ERROR_NONE)
+                return error;
+
+            memset(&hints, 0, sizeof(hints));
+
+            hints.ai_family = igloo_socketaddr_get_sysid_domain(domain);
+            hints.ai_socktype = igloo_socketaddr_get_sysid_type(type);
+            hints.ai_protocol = igloo_socketaddr_get_sysid_protocol(protocol);
+            hints.ai_flags = AI_ADDRCONFIG|AI_NUMERICSERV|AI_NUMERICHOST;
+
+            if (!do_connect) {
+                hints.ai_flags |= AI_PASSIVE;
+            }
+
+            snprintf(service, sizeof(service), "%u", (unsigned int)port);
+
+            if ((ret = getaddrinfo(value, service, &hints, &res)) != 0) {
+                return igloo_ERROR_GENERIC;
+            }
+
+            ai = res;
+
+            do {
+                if (do_connect) {
+                    ret = connect(sock->syssock, ai->ai_addr, ai->ai_addrlen);
+                } else {
+                    ret = bind(sock->syssock, ai->ai_addr, ai->ai_addrlen);
+                }
+            } while (ret != 0 && (ai = ai->ai_next));
+
+            freeaddrinfo(res);
+        break;
+        default:
+            return igloo_ERROR_GENERIC;
+        break;
+    }
+
+
+    if (!already_done) {
+        if (do_connect) {
+            ret = connect(sock->syssock, sa, sa_len);
+        } else {
+            ret = bind(sock->syssock, sa, sa_len);
+        }
+    }
+
+    if (ret == 0) {
+        return igloo_ERROR_NONE;
+    } else {
+        return igloo_ERROR_GENERIC;
+    }
+}
+
+igloo_socket_t * igloo_socket_new(igloo_socketaddr_domain_t domain, igloo_socketaddr_type_t type, igloo_socketaddr_protocol_t protocol, const char *name, igloo_ro_t associated, igloo_ro_t instance)
+{
+    igloo_socket_t *sock = igloo_ro_new_raw(igloo_socket_t, name, associated, instance);
+
+    if (!sock)
+        return NULL;
+
+    sock->domain = domain;
+    sock->type = type;
+    sock->protocol = protocol;
+
+    sock->syssock = socket(igloo_socketaddr_get_sysid_domain(domain), igloo_socketaddr_get_sysid_type(type), igloo_socketaddr_get_sysid_protocol(protocol));
+    if (sock->syssock == -1) {
+        igloo_ro_unref(sock);
+        return NULL;
+    }
+
+    return sock;
+}
+
+static inline igloo_error_t _replace_addr(igloo_socketaddr_t **storage, igloo_socketaddr_t *addr)
+{
+    igloo_error_t ret;
+
+    if (addr) {
+        ret = igloo_ro_ref(addr);
+        if (ret != igloo_ERROR_NONE)
+            return ret;
+    }
+
+    igloo_ro_unref(*storage);
+    *storage = addr;
+
+    return igloo_ERROR_NONE;
+}
+
+igloo_error_t igloo_socket_alter_address(igloo_socket_t *sock, igloo_socket_addressop_t op, igloo_socket_endpoint_t endpoint, igloo_socketaddr_t *addr)
+{
+    igloo_socketaddr_t **storage = NULL;
+
+    if (!igloo_RO_IS_VALID(sock, igloo_socket_t))
+        return igloo_ERROR_FAULT;
+
+    switch (endpoint) {
+        case igloo_SOCKET_ENDPOINT_LOCAL:
+        case igloo_SOCKET_ENDPOINT_LOCAL_PHYSICAL:
+            storage = &(sock->local_physical);
+        break;
+        case igloo_SOCKET_ENDPOINT_PEER:
+        case igloo_SOCKET_ENDPOINT_PEER_PHYSICAL:
+            storage = &(sock->peer_physical);
+        break;
+        default:
+            return igloo_ERROR_GENERIC;
+        break;
+    }
+
+    switch (op) {
+        case igloo_SOCKET_ADDRESSOP_CLEAR:
+            return _replace_addr(storage, NULL);
+        break;
+        case igloo_SOCKET_ADDRESSOP_REPLACE:
+            return _replace_addr(storage, addr);
+        break;
+        case igloo_SOCKET_ADDRESSOP_ADD:
+            if (*storage)
+                return igloo_ERROR_GENERIC;
+            return _replace_addr(storage, addr);
+        break;
+        case igloo_SOCKET_ADDRESSOP_REMOVE:
+            if (*storage != addr)
+                return igloo_ERROR_GENERIC;
+            return _replace_addr(storage, NULL);
+        break;
+        default:
+            return igloo_ERROR_GENERIC;
+        break;
+    }
+}
+
+igloo_socketaddr_t * igloo_socket_get_main_address(igloo_socket_t *sock, igloo_socket_endpoint_t endpoint, igloo_error_t *error)
+{
+    igloo_socketaddr_t *ret = NULL;
+    igloo_error_t err;
+
+    if (!igloo_RO_IS_VALID(sock, igloo_socket_t)) {
+        if (error)
+            *error = igloo_ERROR_FAULT;
+        return NULL;
+    }
+
+    switch (endpoint) {
+        case igloo_SOCKET_ENDPOINT_LOCAL:
+        case igloo_SOCKET_ENDPOINT_LOCAL_PHYSICAL:
+            ret = sock->local_physical;
+        break;
+        case igloo_SOCKET_ENDPOINT_PEER:
+        case igloo_SOCKET_ENDPOINT_PEER_PHYSICAL:
+            ret = sock->peer_physical;
+        break;
+        default:
+            if (error)
+                *error = igloo_ERROR_GENERIC;
+            return NULL;
+        break;
+    }
+
+    if (ret) {
+        err = igloo_ro_ref(ret);
+        if (err != igloo_ERROR_NONE) {
+            if (error)
+                *error = err;
+            return NULL;
+        }
+    }
+
+    if (error)
+        *error = igloo_ERROR_NONE;
+    return ret;
+}
+
+igloo_list_t * igloo_socket_get_address(igloo_socket_t *sock, igloo_socket_endpoint_t endpoint, igloo_error_t *error)
+{
+    igloo_error_t err;
+    igloo_socketaddr_t *addr;
+    igloo_list_t *list;
+
+    addr = igloo_socket_get_main_address(sock, endpoint, &err);
+    if (err != igloo_ERROR_NONE) {
+        if (error)
+            *error = err;
+        return NULL;
+    }
+
+    list = igloo_ro_new_ext(igloo_list_t, NULL, igloo_RO_NULL, addr);
+    if (!list) {
+        igloo_ro_unref(addr);
+        if (error)
+            *error = igloo_ERROR_NOMEM;
+        return NULL;
+    }
+
+    if (igloo_list_push(list, addr) != 0) {
+        igloo_ro_unref(addr);
+        igloo_ro_unref(list);
+        if (error)
+            *error = igloo_ERROR_GENERIC;
+        return NULL;
+    }
+
+    igloo_ro_unref(addr);
+
+    if (error)
+        *error = igloo_ERROR_NONE;
+
+    return list;
+}
+
+igloo_error_t igloo_socket_connect(igloo_socket_t *sock)
+{
+    if (!igloo_RO_IS_VALID(sock, igloo_socket_t))
+        return igloo_ERROR_FAULT;
+
+    if (sock->local_physical) {
+        igloo_error_t error;
+        error = __bind_or_connect(sock, sock->local_physical, 0);
+        if (error != igloo_ERROR_NONE)
+            return error;
+    }
+
+    return __bind_or_connect(sock, sock->peer_physical, 1);
+}
+
+igloo_error_t igloo_socket_listen(igloo_socket_t *sock, ssize_t backlog)
+{
+    if (!igloo_RO_IS_VALID(sock, igloo_socket_t))
+        return igloo_ERROR_FAULT;
+
+    if (backlog < 1)
+        backlog = 16;
+
+    if (sock->local_physical) {
+        igloo_error_t error;
+        error = __bind_or_connect(sock, sock->local_physical, 0);
+        if (error != igloo_ERROR_NONE)
+            return error;
+    }
+
+    if (listen(sock->syssock, backlog) != 0)
+        return igloo_ERROR_GENERIC;
+
+    return igloo_ERROR_NONE;
+}
+
+igloo_error_t igloo_socket_shutdown(igloo_socket_t *sock, igloo_socket_shutdown_t how)
+{
+    int syshow;
+
+    if (!igloo_RO_IS_VALID(sock, igloo_socket_t))
+        return igloo_ERROR_FAULT;
+
+    switch (how) {
+        case igloo_SOCKET_SHUTDOWN_NONE:
+            return igloo_ERROR_NONE;
+        break;
+        case igloo_SOCKET_SHUTDOWN_RECEIVE:
+            syshow = SHUT_RD;
+        break;
+        case igloo_SOCKET_SHUTDOWN_SEND:
+            syshow = SHUT_WR;
+        break;
+        case igloo_SOCKET_SHUTDOWN_RECEIVESEND:
+            syshow = SHUT_RDWR;
+        break;
+        default:
+            return igloo_ERROR_INVAL;
+        break;
+    }
+
+    if (shutdown(sock->syssock, syshow) != 0)
+        return igloo_ERROR_GENERIC;
+
+    return igloo_ERROR_NONE;
+}
+
+igloo_socket_t * igloo_socket_accept(igloo_socket_t *sock, igloo_error_t *error)
+{
+    if (!igloo_RO_IS_VALID(sock, igloo_socket_t)) {
+        if (error)
+            *error = igloo_ERROR_FAULT;
+        return NULL;
+    }
+
+    if (error)
+        *error = igloo_ERROR_GENERIC;
+    return NULL;
+}
+
+igloo_error_t igloo_socket_control(igloo_socket_t *sock, igloo_socket_control_t control, ...)
+{
+    if (!igloo_RO_IS_VALID(sock, igloo_socket_t))
+        return igloo_ERROR_FAULT;
+
+    return igloo_ERROR_GENERIC;
+}

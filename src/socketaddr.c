@@ -207,7 +207,7 @@ static inline int _is_ip(const char *what)
 #endif
 
 #if defined(HAVE_GETNAMEINFO) && defined(HAVE_GETADDRINFO)
-static const char *_get_ip(const char *name, char *buff, size_t len)
+static const char *_get_ip(igloo_socketaddr_t *addr, const char *name, char *buff, size_t len)
 {
     struct addrinfo *head, hints;
     const char *ret = NULL;
@@ -219,8 +219,9 @@ static const char *_get_ip(const char *name, char *buff, size_t len)
     }
 
     memset(&hints, 0, sizeof (hints));
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_family = igloo_socketaddr_get_sysid_domain(addr->domain);
+    hints.ai_socktype = igloo_socketaddr_get_sysid_type(addr->type);
+    hints.ai_protocol = igloo_socketaddr_get_sysid_protocol(addr->protocol);
 
     if (getaddrinfo(name, NULL, &hints, &head))
         return NULL;
@@ -268,7 +269,7 @@ static igloo_error_t _get_service(igloo_socketaddr_t *addr, const char *name, ui
 }
 #else
 
-static const char *_get_ip(const char *name, char *buff, size_t len)
+static const char *_get_ip(igloo_socketaddr_t *addr, const char *name, char *buff, size_t len)
 {
     struct hostent *host;
     const char *ret = NULL;
@@ -388,7 +389,7 @@ igloo_error_t           igloo_socketaddr_get_ip(igloo_socketaddr_t *addr, const 
 
     if (!addr->ip && addr->node) {
         char ip[MAX_ADDR_LEN];
-        _replace_string(&(addr->ip), _get_ip(addr->node, ip, sizeof(ip)));
+        _replace_string(&(addr->ip), _get_ip(addr, addr->node, ip, sizeof(ip)));
     }
 
     if (!addr->ip)
