@@ -263,12 +263,15 @@ static igloo_error_t __bind_or_connect(igloo_socket_t *sock, igloo_socketaddr_t 
     }
 }
 
-igloo_socket_t * igloo_socket_new(igloo_socketaddr_domain_t domain, igloo_socketaddr_type_t type, igloo_socketaddr_protocol_t protocol, const char *name, igloo_ro_t associated, igloo_ro_t instance)
+igloo_socket_t * igloo_socket_new(igloo_socketaddr_domain_t domain, igloo_socketaddr_type_t type, igloo_socketaddr_protocol_t protocol, const char *name, igloo_ro_t associated, igloo_ro_t instance, igloo_error_t *error)
 {
     igloo_socket_t *sock = igloo_ro_new_raw(igloo_socket_t, name, associated, instance);
 
-    if (!sock)
+    if (!sock) {
+        if (error)
+            *error = igloo_ERROR_NOMEM;
         return NULL;
+    }
 
     sock->domain = domain;
     sock->type = type;
@@ -277,6 +280,8 @@ igloo_socket_t * igloo_socket_new(igloo_socketaddr_domain_t domain, igloo_socket
     sock->syssock = socket(igloo_socketaddr_get_sysid_domain(domain), igloo_socketaddr_get_sysid_type(type), igloo_socketaddr_get_sysid_protocol(protocol));
     if (sock->syssock == -1) {
         igloo_ro_unref(sock);
+        if (error)
+            *error = igloo_ERROR_GENERIC;
         return NULL;
     }
 
@@ -298,10 +303,10 @@ igloo_socket_t * igloo_socket_new_simple(igloo_socket_endpoint_t endpoint, igloo
         return NULL;
     }
 
-    sock = igloo_socket_new(domain, type, protocol, NULL, igloo_RO_NULL, addr);
+    sock = igloo_socket_new(domain, type, protocol, NULL, igloo_RO_NULL, addr, &err);
     if (!sock) {
         if (error)
-            *error = igloo_ERROR_GENERIC;
+            *error = err;
         return NULL;
     }
 
