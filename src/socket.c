@@ -126,9 +126,27 @@ igloo_error_t __set_blockingmode(igloo_INTERFACE_BASIC_ARGS, libigloo_io_blockin
 
 static igloo_error_t __get_blockingmode(igloo_INTERFACE_BASIC_ARGS, libigloo_io_blockingmode_t *mode)
 {
-    igloo_socket_t *sock = igloo_RO_TO_TYPE(*backend_object, igloo_socket_t);
+#ifdef _WIN32
     *mode = igloo_IO_BLOCKINGMODE_ERROR;
     return igloo_ERROR_GENERIC;
+#else
+    igloo_socket_t *sock = igloo_RO_TO_TYPE(*backend_object, igloo_socket_t);
+    int flags;
+
+    flags = fcntl(sock->syssock, F_GETFL);
+    if (flags == -1) {
+        *mode = igloo_IO_BLOCKINGMODE_ERROR;
+        return igloo_ERROR_GENERIC;
+    }
+
+    if (flags & O_NONBLOCK) {
+        *mode = igloo_IO_BLOCKINGMODE_NONE;
+    } else {
+        *mode = igloo_IO_BLOCKINGMODE_FULL;
+    }
+
+    return igloo_ERROR_NONE;
+#endif
 }
 
 static igloo_error_t __get_fd_for_systemcall(igloo_INTERFACE_BASIC_ARGS, int *fd)
