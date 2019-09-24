@@ -183,6 +183,28 @@ int igloo_socketaddr_get_sysid_protocol(igloo_socketaddr_protocol_t protocol)
     return -1;
 }
 
+void igloo_socketaddr_complete(igloo_socketaddr_t *addr)
+{
+    if (!igloo_RO_IS_VALID(addr, igloo_socketaddr_t))
+        return;
+
+    if (addr->type == igloo_SOCKETADDR_TYPE_UNSPEC) {
+        switch (addr->protocol) {
+            case igloo_SOCKETADDR_PROTOCOL_TCP:
+                addr->type = igloo_SOCKETADDR_TYPE_STREAM;
+            break;
+            case igloo_SOCKETADDR_PROTOCOL_UDP:
+            case igloo_SOCKETADDR_PROTOCOL_UDPLITE:
+            case igloo_SOCKETADDR_PROTOCOL_DCCP:
+                addr->type = igloo_SOCKETADDR_TYPE_STREAM;
+            break;
+            default:
+                /* noop */
+            break;
+        }
+    }
+}
+
 #ifdef HAVE_INET_PTON
 static inline int _is_ip(const char *what)
 {
@@ -343,6 +365,8 @@ igloo_socketaddr_t *    igloo_socketaddr_new(igloo_socketaddr_domain_t domain, i
     addr->type = type;
     addr->protocol = protocol;
 
+    igloo_socketaddr_complete(addr);
+
     return addr;
 }
 
@@ -398,6 +422,8 @@ igloo_error_t           igloo_socketaddr_get_ip(igloo_socketaddr_t *addr, const 
     if (ip)
         *ip = addr->ip;
 
+    igloo_socketaddr_complete(addr);
+
     return igloo_ERROR_NONE;
 }
 
@@ -411,6 +437,8 @@ igloo_error_t           igloo_socketaddr_set_port(igloo_socketaddr_t *addr, uint
 
     addr->port = port;
     addr->set |= SET_PORT;
+
+    igloo_socketaddr_complete(addr);
 
     return igloo_ERROR_NONE;
 }
