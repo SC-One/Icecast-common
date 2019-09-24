@@ -283,6 +283,39 @@ igloo_socket_t * igloo_socket_new(igloo_socketaddr_domain_t domain, igloo_socket
     return sock;
 }
 
+igloo_socket_t * igloo_socket_new_simple(igloo_socket_endpoint_t endpoint, igloo_socketaddr_t *addr, igloo_error_t *error)
+{
+    igloo_socketaddr_domain_t domain;
+    igloo_socketaddr_type_t type;
+    igloo_socketaddr_protocol_t protocol;
+    igloo_error_t err;
+    igloo_socket_t *sock;
+
+    err = igloo_socketaddr_get_base(addr, &domain, &type, &protocol);
+    if (err != igloo_ERROR_NONE) {
+        if (error)
+            *error = err;
+        return NULL;
+    }
+
+    sock = igloo_socket_new(domain, type, protocol, NULL, igloo_RO_NULL, addr);
+    if (!sock) {
+        if (error)
+            *error = igloo_ERROR_GENERIC;
+        return NULL;
+    }
+
+    err = igloo_socket_alter_address(sock, igloo_SOCKET_ADDRESSOP_ADD, endpoint, addr);
+    if (err != igloo_ERROR_NONE) {
+        igloo_ro_unref(sock);
+        if (error)
+            *error = err;
+        return NULL;
+    }
+
+    return sock;
+}
+
 static inline igloo_error_t _replace_addr(igloo_socketaddr_t **storage, igloo_socketaddr_t *addr)
 {
     igloo_error_t ret;

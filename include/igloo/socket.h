@@ -70,6 +70,7 @@ typedef enum {
 } igloo_socket_endpoint_t;
 
 igloo_socket_t * igloo_socket_new(igloo_socketaddr_domain_t domain, igloo_socketaddr_type_t type, igloo_socketaddr_protocol_t protocol, const char *name, igloo_ro_t associated, igloo_ro_t instance);
+igloo_socket_t * igloo_socket_new_simple(igloo_socket_endpoint_t endpoint, igloo_socketaddr_t *addr, igloo_error_t *error);
 igloo_error_t igloo_socket_alter_address(igloo_socket_t *sock, igloo_socket_addressop_t op, igloo_socket_endpoint_t endpoint, igloo_socketaddr_t *addr);
 igloo_socketaddr_t * igloo_socket_get_main_address(igloo_socket_t *sock, igloo_socket_endpoint_t endpoint, igloo_error_t *error);
 igloo_list_t * igloo_socket_get_address(igloo_socket_t *sock, igloo_socket_endpoint_t endpoint, igloo_error_t *error);
