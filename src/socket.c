@@ -51,15 +51,20 @@ igloo_RO_PUBLIC_TYPE(igloo_socket_t,
         igloo_RO_TYPEDECL_GET_INTERFACE(__get_interface_t)
         );
 
+static inline void __close_socket(int syssock)
+{
+#ifndef _WIN32
+    close(syssock);
+#else
+    closesocket(syssock);
+#endif
+}
+
 static void __free(igloo_ro_t self)
 {
     igloo_socket_t *sock = igloo_RO_TO_TYPE(self, igloo_socket_t);
 
-#ifndef _WIN32
-    close(sock->syssock);
-#else
-    closesocket(sock->syssock);
-#endif
+    __close_socket(sock->syssock);
 }
 
 static ssize_t __read(igloo_INTERFACE_BASIC_ARGS, void *buffer, size_t len, igloo_error_t *error)
@@ -281,7 +286,7 @@ static igloo_error_t __bind_or_connect(igloo_socket_t *sock, igloo_socketaddr_t 
     }
 }
 
-igloo_socket_t * igloo_socket_new(igloo_socketaddr_domain_t domain, igloo_socketaddr_type_t type, igloo_socketaddr_protocol_t protocol, const char *name, igloo_ro_t associated, igloo_ro_t instance, igloo_error_t *error)
+igloo_socket_t * igloo_socket_new__real(igloo_socketaddr_domain_t domain, igloo_socketaddr_type_t type, igloo_socketaddr_protocol_t protocol, const char *name, igloo_ro_t associated, igloo_ro_t instance, igloo_error_t *error, int syssock)
 {
     igloo_socket_t *sock = igloo_ro_new_raw(igloo_socket_t, name, associated, instance);
 
@@ -295,15 +300,24 @@ igloo_socket_t * igloo_socket_new(igloo_socketaddr_domain_t domain, igloo_socket
     sock->type = type;
     sock->protocol = protocol;
 
-    sock->syssock = socket(igloo_socketaddr_get_sysid_domain(domain), igloo_socketaddr_get_sysid_type(type), igloo_socketaddr_get_sysid_protocol(protocol));
-    if (sock->syssock == -1) {
-        igloo_ro_unref(sock);
-        if (error)
-            *error = igloo_ERROR_GENERIC;
-        return NULL;
+    if (syssock >= 0) {
+        sock->syssock = syssock;
+    } else {
+        sock->syssock = socket(igloo_socketaddr_get_sysid_domain(domain), igloo_socketaddr_get_sysid_type(type), igloo_socketaddr_get_sysid_protocol(protocol));
+        if (sock->syssock == -1) {
+            igloo_ro_unref(sock);
+            if (error)
+                *error = igloo_ERROR_GENERIC;
+            return NULL;
+        }
     }
 
     return sock;
+}
+
+igloo_socket_t * igloo_socket_new(igloo_socketaddr_domain_t domain, igloo_socketaddr_type_t type, igloo_socketaddr_protocol_t protocol, const char *name, igloo_ro_t associated, igloo_ro_t instance, igloo_error_t *error)
+{
+    return igloo_socket_new__real(domain, type, protocol, name, associated, instance, error, -1);
 }
 
 igloo_socket_t * igloo_socket_new_simple(igloo_socket_endpoint_t endpoint, igloo_socketaddr_t *addr, igloo_error_t *error)
@@ -544,17 +558,53 @@ igloo_error_t igloo_socket_shutdown(igloo_socket_t *sock, igloo_socket_shutdown_
     return igloo_ERROR_NONE;
 }
 
-igloo_socket_t * igloo_socket_accept(igloo_socket_t *sock, igloo_error_t *error)
+igloo_socket_t * igloo_socket_accept(igloo_socket_t *sock, const char *name, igloo_ro_t associated, igloo_error_t *error)
 {
+    struct sockaddr_storage addr;
+    socklen_t addr_len = sizeof(addr);
+    igloo_socket_t *ret;
+    igloo_socketaddr_t *peer;
+    int res;
+    int domain;
+
     if (!igloo_RO_IS_VALID(sock, igloo_socket_t)) {
         if (error)
             *error = igloo_ERROR_FAULT;
         return NULL;
     }
 
+    res = accept(sock->syssock, (struct sockaddr*)&addr, &addr_len);
+    if (res < 0) {
+        if (error)
+            *error = igloo_ERROR_GENERIC;
+        return NULL;
+    }
+
+    if (addr_len >= sizeof(struct sockaddr)) {
+        domain = ((struct sockaddr*)&addr)->sa_family;
+    } else {
+        domain = igloo_socketaddr_get_sysid_domain(sock->domain);
+    }
+
+    ret = igloo_socket_new__real(domain, sock->type, sock->protocol, name, associated, sock, error, res);
+    if (ret == NULL) {
+        __close_socket(res);
+        return NULL;
+    }
+
+    if (domain == igloo_socketaddr_get_sysid_domain(sock->domain)) {
+        igloo_socket_alter_address(ret, igloo_SOCKET_ADDRESSOP_REPLACE, igloo_SOCKET_ENDPOINT_LOCAL_PHYSICAL, sock->local_physical);
+    }
+
+    peer = igloo_socketaddr_new_from_sockaddr(sock->domain, sock->type, sock->protocol, &addr, addr_len, NULL, igloo_RO_NULL, sock, NULL);
+    if (peer) {
+        igloo_socket_alter_address(ret, igloo_SOCKET_ADDRESSOP_REPLACE, igloo_SOCKET_ENDPOINT_PEER_PHYSICAL, peer);
+        igloo_ro_unref(peer);
+    }
+
     if (error)
-        *error = igloo_ERROR_GENERIC;
-    return NULL;
+        *error = igloo_ERROR_NONE;
+    return ret;
 }
 
 igloo_error_t igloo_socket_control(igloo_socket_t *sock, igloo_socket_control_t control, ...)

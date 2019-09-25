@@ -77,7 +77,7 @@ igloo_list_t * igloo_socket_get_address(igloo_socket_t *sock, igloo_socket_endpo
 igloo_error_t igloo_socket_connect(igloo_socket_t *sock);
 igloo_error_t igloo_socket_listen(igloo_socket_t *sock, ssize_t backlog);
 igloo_error_t igloo_socket_shutdown(igloo_socket_t *sock, igloo_socket_shutdown_t how);
-igloo_socket_t * igloo_socket_accept(igloo_socket_t *sock, igloo_error_t *error);
+igloo_socket_t * igloo_socket_accept(igloo_socket_t *sock, const char *name, igloo_ro_t associated, igloo_error_t *error);
 igloo_error_t igloo_socket_control(igloo_socket_t *sock, igloo_socket_control_t control, ...);
 
 
