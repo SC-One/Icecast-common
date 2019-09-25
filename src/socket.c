@@ -41,6 +41,8 @@ struct igloo_socket_tag {
     igloo_socketaddr_t *local_physical;
     igloo_socketaddr_t *peer_physical;
 
+    igloo_socket_action_t action;
+
     int syssock;
 };
 
@@ -100,8 +102,7 @@ static igloo_error_t __sync(igloo_INTERFACE_BASIC_ARGS, igloo_io_opflag_t flags)
     return igloo_ERROR_NONE;
 }
 
-igloo_error_t __set_blockingmode(igloo_INTERFACE_BASIC_ARGS, libigloo_io_blockingmode_t mode) {
-    igloo_socket_t *sock = igloo_RO_TO_TYPE(*backend_object, igloo_socket_t);
+igloo_error_t __set_blockingmode__socket(igloo_socket_t *sock, libigloo_io_blockingmode_t mode) {
 #ifdef _WIN32
 #ifdef __MINGW32__
     u_long varblock = 1;
@@ -126,8 +127,16 @@ igloo_error_t __set_blockingmode(igloo_INTERFACE_BASIC_ARGS, libigloo_io_blockin
         flags -= O_NONBLOCK;
     }
 
-    return fcntl(sock->syssock, F_SETFL, flags) == 0 ? igloo_ERROR_NONE : igloo_ERROR_GENERIC;
+    if (fcntl(sock->syssock, F_SETFL, flags) == 0) {
+        return igloo_ERROR_NONE;
+    } else {
+        return igloo_ERROR_GENERIC;
+    }
 #endif
+}
+igloo_error_t __set_blockingmode(igloo_INTERFACE_BASIC_ARGS, libigloo_io_blockingmode_t mode) {
+    igloo_socket_t *sock = igloo_RO_TO_TYPE(*backend_object, igloo_socket_t);
+    return __set_blockingmode__socket(sock, mode);
 }
 
 static igloo_error_t __get_blockingmode(igloo_INTERFACE_BASIC_ARGS, libigloo_io_blockingmode_t *mode)
@@ -167,6 +176,7 @@ static const igloo_io_ifdesc_t igloo_socket_io_ifdesc = {
     .read = __read,
     .write = __write,
     .sync = __sync,
+    .set_blockingmode = __set_blockingmode,
     .get_blockingmode = __get_blockingmode,
     .get_fd_for_systemcall = __get_fd_for_systemcall
 };
@@ -646,3 +656,154 @@ igloo_error_t igloo_socket_control(igloo_socket_t *sock, igloo_socket_control_t 
 
     return ret;
 }
+
+igloo_error_t igloo_socket_nonblocking(igloo_socket_t *sock, igloo_socket_action_t action) {
+    igloo_error_t error;
+
+    if (!igloo_RO_IS_VALID(sock, igloo_socket_t))
+        return igloo_ERROR_FAULT;
+
+    switch (action) {
+        case igloo_SOCKET_ACTION_NONE:
+            error = __set_blockingmode__socket(sock, igloo_IO_BLOCKINGMODE_FULL);
+            if (error != igloo_ERROR_NONE)
+                return error;
+            sock->action = action;
+
+            return igloo_ERROR_NONE;
+        break;
+        case igloo_SOCKET_ACTION_CONNECT:
+        case igloo_SOCKET_ACTION_ACCEPT:
+            error = __set_blockingmode__socket(sock, igloo_IO_BLOCKINGMODE_NONE);
+            if (error != igloo_ERROR_NONE)
+                return error;
+            sock->action = action;
+
+            if (action == igloo_SOCKET_ACTION_CONNECT) {
+                error = __bind_or_connect(sock, sock->peer_physical, 1);
+                if (error != igloo_ERROR_GENERIC)
+                    return error;
+            }
+
+            return igloo_ERROR_NONE;
+        break;
+        default:
+            return igloo_ERROR_INVAL;
+        break;
+    }
+}
+
+static igloo_error_t igloo_socket_nonblocking__get_return(igloo_socket_t *sock, int in, int out, int error)
+{
+    int val;
+    socklen_t val_len = sizeof(val);
+
+    if (error)
+        return igloo_ERROR_IO;
+
+    switch (sock->action) {
+        case igloo_SOCKET_ACTION_CONNECT:
+            if (getsockopt(sock->syssock, SOL_SOCKET, SO_ERROR, &val, &val_len) != 0) {
+                return igloo_ERROR_GENERIC;
+            }
+
+            if (val) {
+                return igloo_ERROR_AGAIN;
+            }
+
+            return igloo_ERROR_NONE;
+        break;
+        case igloo_SOCKET_ACTION_ACCEPT:
+            if (in) {
+                return igloo_ERROR_NONE;
+            } else {
+                return igloo_ERROR_AGAIN;
+            }
+        break;
+        default:
+            return igloo_ERROR_INVAL;
+        break;
+    }
+}
+
+#ifdef IGLOO_CTC_HAVE_SYS_SELECT_H
+igloo_error_t igloo_socket_nonblocking_select_set(igloo_socket_t *sock, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, int *maxfd)
+{
+    if (!igloo_RO_IS_VALID(sock, igloo_socket_t) || !readfds || !writefds || !exceptfds || !maxfd)
+        return igloo_ERROR_FAULT;
+
+    switch (sock->action) {
+        case igloo_SOCKET_ACTION_CONNECT:
+            FD_SET(sock->syssock, writefds);
+        break;
+        case igloo_SOCKET_ACTION_ACCEPT:
+            FD_SET(sock->syssock, readfds);
+        break;
+        default:
+            return igloo_ERROR_INVAL;
+        break;
+    }
+
+    FD_SET(sock->syssock, exceptfds);
+
+    if (*maxfd < sock->syssock)
+        *maxfd = sock->syssock;
+
+    return igloo_ERROR_NONE;
+}
+
+igloo_error_t igloo_socket_nonblocking_select_clear(igloo_socket_t *sock, fd_set *readfds, fd_set *writefds, fd_set *exceptfds)
+{
+    if (!igloo_RO_IS_VALID(sock, igloo_socket_t) || !readfds || !writefds || !exceptfds)
+        return igloo_ERROR_FAULT;
+
+    FD_CLR(sock->syssock, readfds);
+    FD_CLR(sock->syssock, writefds);
+    FD_CLR(sock->syssock, exceptfds);
+
+    return igloo_ERROR_NONE;
+}
+igloo_error_t igloo_socket_nonblocking_select_result(igloo_socket_t *sock, fd_set *readfds, fd_set *writefds, fd_set *exceptfds)
+{
+    if (!igloo_RO_IS_VALID(sock, igloo_socket_t) || !readfds || !writefds || !exceptfds)
+        return igloo_ERROR_FAULT;
+
+    return igloo_socket_nonblocking__get_return(sock, FD_ISSET(sock->syssock, readfds), FD_ISSET(sock->syssock, writefds), FD_ISSET(sock->syssock, exceptfds));
+}
+#endif
+
+
+#ifdef IGLOO_CTC_HAVE_POLL
+igloo_error_t igloo_socket_nonblocking_poll_fill(igloo_socket_t *sock, struct pollfd *fd)
+{
+    if (!igloo_RO_IS_VALID(sock, igloo_socket_t) || !fd)
+        return igloo_ERROR_FAULT;
+
+    memset(fd, 0, sizeof(*fd));
+    fd->fd = sock->syssock;
+
+    switch (sock->action) {
+        case igloo_SOCKET_ACTION_CONNECT:
+            fd->events = POLLOUT;
+        break;
+        case igloo_SOCKET_ACTION_ACCEPT:
+            fd->events = POLLIN;
+        break;
+        default:
+            return igloo_ERROR_INVAL;
+        break;
+    }
+
+    return igloo_ERROR_NONE;
+}
+igloo_error_t igloo_socket_nonblocking_poll_result(igloo_socket_t *sock, struct pollfd *fd)
+{
+    if (!igloo_RO_IS_VALID(sock, igloo_socket_t) || !fd)
+        return igloo_ERROR_FAULT;
+
+    if (fd->fd != sock->syssock)
+        return igloo_ERROR_INVAL;
+
+    return igloo_socket_nonblocking__get_return(sock, fd->revents & POLLIN, fd->revents & POLLOUT, fd->revents & (POLLERR|POLLHUP|POLLNVAL));
+}
+#endif

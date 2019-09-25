@@ -31,6 +31,13 @@ extern "C" {
 
 #include <igloo/config.h>
 
+#ifdef IGLOO_CTC_HAVE_SYS_SELECT_H
+#include <sys/select.h>
+#endif
+#ifdef IGLOO_CTC_HAVE_POLL
+#include <poll.h>
+#endif
+
 #include "types.h"
 #include "socketaddr.h"
 
@@ -69,6 +76,12 @@ typedef enum {
     igloo_SOCKET_ENDPOINT_PEER_LOGICAL
 } igloo_socket_endpoint_t;
 
+typedef enum {
+    igloo_SOCKET_ACTION_NONE = 0,
+    igloo_SOCKET_ACTION_CONNECT,
+    igloo_SOCKET_ACTION_ACCEPT
+} igloo_socket_action_t;
+
 igloo_socket_t * igloo_socket_new(igloo_socketaddr_domain_t domain, igloo_socketaddr_type_t type, igloo_socketaddr_protocol_t protocol, const char *name, igloo_ro_t associated, igloo_ro_t instance, igloo_error_t *error);
 igloo_socket_t * igloo_socket_new_simple(igloo_socket_endpoint_t endpoint, igloo_socketaddr_t *addr, igloo_error_t *error);
 igloo_error_t igloo_socket_alter_address(igloo_socket_t *sock, igloo_socket_addressop_t op, igloo_socket_endpoint_t endpoint, igloo_socketaddr_t *addr);
@@ -80,6 +93,16 @@ igloo_error_t igloo_socket_shutdown(igloo_socket_t *sock, igloo_socket_shutdown_
 igloo_socket_t * igloo_socket_accept(igloo_socket_t *sock, const char *name, igloo_ro_t associated, igloo_error_t *error);
 igloo_error_t igloo_socket_control(igloo_socket_t *sock, igloo_socket_control_t control, ...);
 
+igloo_error_t igloo_socket_nonblocking(igloo_socket_t *sock, igloo_socket_action_t action);
+#ifdef IGLOO_CTC_HAVE_SYS_SELECT_H
+igloo_error_t igloo_socket_nonblocking_select_set(igloo_socket_t *sock, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, int *maxfd);
+igloo_error_t igloo_socket_nonblocking_select_clear(igloo_socket_t *sock, fd_set *readfds, fd_set *writefds, fd_set *exceptfds);
+igloo_error_t igloo_socket_nonblocking_select_result(igloo_socket_t *sock, fd_set *readfds, fd_set *writefds, fd_set *exceptfds);
+#endif
+#ifdef IGLOO_CTC_HAVE_POLL
+igloo_error_t igloo_socket_nonblocking_poll_fill(igloo_socket_t *sock, struct pollfd *fd);
+igloo_error_t igloo_socket_nonblocking_poll_result(igloo_socket_t *sock, struct pollfd *fd);
+#endif
 
 #ifdef __cplusplus
 }
