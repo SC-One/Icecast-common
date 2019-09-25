@@ -375,18 +375,24 @@ static igloo_error_t _get_service(igloo_socketaddr_t *addr, const char *name, ui
 
 #endif
 
-igloo_socketaddr_t *    igloo_socketaddr_new(igloo_socketaddr_domain_t domain, igloo_socketaddr_type_t type, igloo_socketaddr_protocol_t protocol, const char *name, igloo_ro_t associated, igloo_ro_t instance)
+igloo_socketaddr_t *    igloo_socketaddr_new(igloo_socketaddr_domain_t domain, igloo_socketaddr_type_t type, igloo_socketaddr_protocol_t protocol, const char *name, igloo_ro_t associated, igloo_ro_t instance, igloo_error_t *error)
 {
     igloo_socketaddr_t *addr = igloo_ro_new_raw(igloo_socketaddr_t, name, associated, instance);
 
-    if (!addr)
+    if (!addr) {
+        if (error)
+            *error = igloo_ERROR_NOMEM;
         return NULL;
+    }
 
     addr->domain = domain;
     addr->type = type;
     addr->protocol = protocol;
 
     igloo_socketaddr_complete(addr);
+
+    if (error)
+        *error = igloo_ERROR_NONE;
 
     return addr;
 }
@@ -406,12 +412,9 @@ igloo_socketaddr_t *    igloo_socketaddr_new_from_sockaddr(igloo_socketaddr_doma
 
     domain_hint = igloo_socketaddr_get_id_domain(sysaddr->sa_family);
 
-    ret = igloo_socketaddr_new(domain_hint, type_hint, protocol_hint, name, associated, instance);
-    if (ret == NULL) {
-        if (error)
-            *error = igloo_ERROR_GENERIC;
+    ret = igloo_socketaddr_new(domain_hint, type_hint, protocol_hint, name, associated, instance, error);
+    if (ret == NULL)
         return NULL;
-    }
 
     if (getnameinfo(sysaddr, addr_len, ip, sizeof(ip), service, sizeof(service), NI_NUMERICHOST|NI_NUMERICSERV) == 0) {
         igloo_socketaddr_set_node(ret, ip);
