@@ -77,4 +77,7 @@ int igloo_socketaddr_get_sysid_domain(igloo_socketaddr_domain_t domain);
 int igloo_socketaddr_get_sysid_type(igloo_socketaddr_type_t type);
 int igloo_socketaddr_get_sysid_protocol(igloo_socketaddr_protocol_t protocol);
 
+// NOTE: We use generic types here to avoid socket headers for all units.
+igloo_socketaddr_t *    igloo_socketaddr_new_from_sockaddr(igloo_socketaddr_domain_t domain_hint, igloo_socketaddr_type_t type_hint, igloo_socketaddr_protocol_t protocol_hint, const void * /* const struct sockaddr * */ addr, size_t /* socklen_t */ addr_len, const char *name, igloo_ro_t associated, igloo_ro_t instance, igloo_error_t *error);
+
 #endif

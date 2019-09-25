@@ -127,6 +127,27 @@ int igloo_socketaddr_get_sysid_domain(igloo_socketaddr_domain_t domain)
     return -1;
 }
 
+igloo_socketaddr_domain_t igloo_socketaddr_get_id_domain(int domain)
+{
+    switch (domain) {
+        case AF_UNSPEC:
+            return igloo_SOCKETADDR_DOMAIN_UNSPEC;
+        break;
+        case AF_UNIX:
+            return igloo_SOCKETADDR_DOMAIN_UNIX;
+        break;
+        case AF_INET:
+            return igloo_SOCKETADDR_DOMAIN_INET4;
+        break;
+        case AF_INET6:
+            return igloo_SOCKETADDR_DOMAIN_INET6;
+        break;
+        default:
+            return igloo_SOCKETADDR_DOMAIN_UNSPEC;
+        break;
+    }
+}
+
 int igloo_socketaddr_get_sysid_type(igloo_socketaddr_type_t type)
 {
     switch (type) {
@@ -369,6 +390,37 @@ igloo_socketaddr_t *    igloo_socketaddr_new(igloo_socketaddr_domain_t domain, i
 
     return addr;
 }
+
+igloo_socketaddr_t *    igloo_socketaddr_new_from_sockaddr(igloo_socketaddr_domain_t domain_hint, igloo_socketaddr_type_t type_hint, igloo_socketaddr_protocol_t protocol_hint, const void * /* const struct sockaddr * */ addr, size_t /* socklen_t */ addr_len, const char *name, igloo_ro_t associated, igloo_ro_t instance, igloo_error_t *error)
+{
+    igloo_socketaddr_t *ret;
+    const struct sockaddr *sysaddr = addr;
+    char ip[80];
+    char service[80];
+
+    if (addr_len < sizeof(*sysaddr)) {
+        if (error)
+            *error = igloo_ERROR_FAULT;
+        return NULL;
+    }
+
+    domain_hint = igloo_socketaddr_get_id_domain(sysaddr->sa_family);
+
+    ret = igloo_socketaddr_new(domain_hint, type_hint, protocol_hint, name, associated, instance);
+    if (ret == NULL) {
+        if (error)
+            *error = igloo_ERROR_GENERIC;
+        return NULL;
+    }
+
+    if (getnameinfo(sysaddr, addr_len, ip, sizeof(ip), service, sizeof(service), NI_NUMERICHOST|NI_NUMERICSERV) == 0) {
+        igloo_socketaddr_set_node(ret, ip);
+        igloo_socketaddr_set_service(ret, service);
+    }
+
+    return ret;
+}
+
 
 igloo_error_t           igloo_socketaddr_get_base(igloo_socketaddr_t *addr, igloo_socketaddr_domain_t *domain, igloo_socketaddr_type_t *type, igloo_socketaddr_protocol_t *protocol)
 {
