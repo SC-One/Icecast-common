@@ -17,6 +17,7 @@
 
 #include <sys/un.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -609,8 +610,39 @@ igloo_socket_t * igloo_socket_accept(igloo_socket_t *sock, const char *name, igl
 
 igloo_error_t igloo_socket_control(igloo_socket_t *sock, igloo_socket_control_t control, ...)
 {
+    igloo_error_t ret = igloo_ERROR_GENERIC;
+    va_list ap;
+    size_t argst;
+    int tmp;
+
     if (!igloo_RO_IS_VALID(sock, igloo_socket_t))
         return igloo_ERROR_FAULT;
 
-    return igloo_ERROR_GENERIC;
+    va_start(ap, control);
+    switch (control) {
+        case igloo_SOCKET_CONTROL_NONE:
+            ret = igloo_ERROR_NONE;
+        break;
+        case igloo_SOCKET_CONTROL_SET_NODELAY:
+            tmp = 1;
+            if (setsockopt(sock->syssock, IPPROTO_TCP, TCP_NODELAY, &tmp, sizeof(tmp)) != 0) {
+                ret = igloo_ERROR_GENERIC;
+            } else {
+                ret = igloo_ERROR_NONE;
+            }
+        break;
+        case igloo_SOCKET_CONTROL_SET_SEND_BUFFER:
+        case igloo_SOCKET_CONTROL_SET_RECEIVE_BUFFER:
+            argst = va_arg(ap, size_t);
+            tmp = argst;
+            if (setsockopt(sock->syssock, SOL_SOCKET, control == igloo_SOCKET_CONTROL_SET_SEND_BUFFER ? SO_SNDBUF : SO_RCVBUF, &tmp, sizeof(tmp)) != 0) {
+                ret = igloo_ERROR_GENERIC;
+            } else {
+                ret = igloo_ERROR_NONE;
+            }
+        break;
+    }
+    va_end(ap);
+
+    return ret;
 }
