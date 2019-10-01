@@ -703,6 +703,10 @@ static igloo_error_t igloo_socket_nonblocking__get_return(igloo_socket_t *sock, 
 
     switch (sock->action) {
         case igloo_SOCKET_ACTION_CONNECT:
+            if (!out) {
+                return igloo_ERROR_AGAIN;
+            }
+
             if (getsockopt(sock->syssock, SOL_SOCKET, SO_ERROR, &val, &val_len) != 0) {
                 return igloo_ERROR_GENERIC;
             }
