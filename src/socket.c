@@ -44,6 +44,8 @@ struct igloo_socket_tag {
     igloo_socket_action_t action;
 
     int syssock;
+
+    int connected;
 };
 
 static void __free(igloo_ro_t self);
@@ -191,6 +193,9 @@ static igloo_ro_t __get_interface_t(igloo_ro_t self, const igloo_ro_type_t *type
     if (type != igloo_RO_GET_TYPE_BY_SYMBOL(igloo_io_t))
         return igloo_RO_NULL;
 
+    if (!sock->connected)
+        return igloo_RO_NULL;
+
     return (igloo_ro_t)igloo_io_new(&igloo_socket_io_ifdesc, self, NULL, name, associated, instance);
 }
 
@@ -291,6 +296,8 @@ static igloo_error_t __bind_or_connect(igloo_socket_t *sock, igloo_socketaddr_t 
     }
 
     if (ret == 0) {
+        if (do_connect)
+            sock->connected = 1;
         return igloo_ERROR_NONE;
     } else {
         return igloo_ERROR_GENERIC;
@@ -603,6 +610,8 @@ igloo_socket_t * igloo_socket_accept(igloo_socket_t *sock, const char *name, igl
         return NULL;
     }
 
+    ret->connected = 1;
+
     if (domain == igloo_socketaddr_get_sysid_domain(sock->domain)) {
         igloo_socket_alter_address(ret, igloo_SOCKET_ADDRESSOP_REPLACE, igloo_SOCKET_ENDPOINT_LOCAL_PHYSICAL, sock->local_physical);
     }
@@ -716,6 +725,7 @@ static igloo_error_t igloo_socket_nonblocking__get_return(igloo_socket_t *sock, 
             }
 
             igloo_socket_nonblocking(sock, igloo_SOCKET_ACTION_NONE);
+            sock->connected = 1;
             return igloo_ERROR_NONE;
         break;
         case igloo_SOCKET_ACTION_ACCEPT:
