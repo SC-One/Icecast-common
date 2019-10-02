@@ -715,6 +715,7 @@ static igloo_error_t igloo_socket_nonblocking__get_return(igloo_socket_t *sock, 
                 return igloo_ERROR_AGAIN;
             }
 
+            igloo_socket_nonblocking(sock, igloo_SOCKET_ACTION_NONE);
             return igloo_ERROR_NONE;
         break;
         case igloo_SOCKET_ACTION_ACCEPT:
