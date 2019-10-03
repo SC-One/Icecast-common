@@ -64,20 +64,25 @@ ssize_t igloo_io_ ## x (igloo_io_t *io, void *buffer, size_t len, igloo_error_t 
     ssize_t ret = -1; \
     igloo_error_t error_store; \
 \
-    if (!io || !buffer) \
+    if (!error) \
+        error = &error_store; \
+\
+    if (!io || !buffer) {\
+        *error = igloo_ERROR_FAULT; \
         return -1; \
+    } \
 \
     if (!len) \
         return 0; \
 \
-    if (!error) \
-        error = &error_store; \
-\
     igloo_thread_mutex_lock(&(io->lock)); \
     io->touched = 1; \
 \
-    if (io->ifdesc->x) \
+    if (io->ifdesc->x) {\
         ret = io->ifdesc->x(igloo_INTERFACE_BASIC_CALL(io), buffer, len, error); \
+    } else { \
+        *error = igloo_ERROR_GENERIC; \
+    } \
     igloo_thread_mutex_unlock(&(io->lock)); \
 \
     return ret; \
@@ -91,20 +96,25 @@ ssize_t igloo_io_write(igloo_io_t *io, const void *buffer, size_t len, igloo_err
     ssize_t ret = -1;
     igloo_error_t error_store;
 
-    if (!io || !buffer)
+    if (!error)
+        error = &error_store;
+
+    if (!io || !buffer) {
+        *error = igloo_ERROR_FAULT;
         return -1;
+    }
 
     if (!len)
         return 0;
 
-    if (!error)
-        error = &error_store;
-
     igloo_thread_mutex_lock(&(io->lock));
     io->touched = 1;
 
-    if (io->ifdesc->write)
+    if (io->ifdesc->write) {
         ret = io->ifdesc->write(igloo_INTERFACE_BASIC_CALL(io), buffer, len, error);
+    } else {
+        *error = igloo_ERROR_GENERIC;
+    }
     igloo_thread_mutex_unlock(&(io->lock));
 
     return ret;
