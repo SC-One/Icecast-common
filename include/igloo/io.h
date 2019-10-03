@@ -105,17 +105,17 @@ typedef enum {
 typedef struct {
     igloo_interface_base_ifdesc_t __base;
 
-    ssize_t (*read)(igloo_INTERFACE_BASIC_ARGS, void *buffer, size_t len);
-    ssize_t (*write)(igloo_INTERFACE_BASIC_ARGS, const void *buffer, size_t len);
-    int (*flush)(igloo_INTERFACE_BASIC_ARGS, igloo_io_opflag_t flags);
-    int (*sync)(igloo_INTERFACE_BASIC_ARGS, igloo_io_opflag_t flags);
-    int (*set_blockingmode)(igloo_INTERFACE_BASIC_ARGS, libigloo_io_blockingmode_t mode);
-    libigloo_io_blockingmode_t (*get_blockingmode)(igloo_INTERFACE_BASIC_ARGS);
-    int (*get_fd_for_systemcall)(igloo_INTERFACE_BASIC_ARGS);
+    ssize_t (*read)(igloo_INTERFACE_BASIC_ARGS, void *buffer, size_t len, igloo_error_t *error);
+    ssize_t (*write)(igloo_INTERFACE_BASIC_ARGS, const void *buffer, size_t len, igloo_error_t *error);
+    igloo_error_t (*flush)(igloo_INTERFACE_BASIC_ARGS, igloo_io_opflag_t flags);
+    igloo_error_t (*sync)(igloo_INTERFACE_BASIC_ARGS, igloo_io_opflag_t flags);
+    igloo_error_t (*set_blockingmode)(igloo_INTERFACE_BASIC_ARGS, libigloo_io_blockingmode_t mode);
+    igloo_error_t (*get_blockingmode)(igloo_INTERFACE_BASIC_ARGS, libigloo_io_blockingmode_t *mode);
+    igloo_error_t (*get_fd_for_systemcall)(igloo_INTERFACE_BASIC_ARGS, int *fd);
 #ifdef IGLOO_CTC_STDC_HEADERS
-    int (*control)(igloo_INTERFACE_BASIC_ARGS, igloo_io_opflag_t flags, igloo_io_control_t control, va_list ap);
+    igloo_error_t (*control)(igloo_INTERFACE_BASIC_ARGS, igloo_io_opflag_t flags, igloo_io_control_t control, va_list ap);
 #else
-    int (*control)(igloo_INTERFACE_BASIC_ARGS, igloo_io_opflag_t flags, igloo_io_control_t control, ...);
+    igloo_error_t (*control)(igloo_INTERFACE_BASIC_ARGS, igloo_io_opflag_t flags, igloo_io_control_t control, ...);
 #endif
 } igloo_io_ifdesc_t;
 
@@ -143,7 +143,7 @@ igloo_io_t * igloo_io_new(const igloo_io_ifdesc_t *ifdesc, igloo_ro_t backend_ob
  * Returns:
  *  The actual amount of bytes read.
  */
-ssize_t igloo_io_read(igloo_io_t *io, void *buffer, size_t len);
+ssize_t igloo_io_read(igloo_io_t *io, void *buffer, size_t len, igloo_error_t *error);
 /* Write data to a IO handle.
  * Parameters:
  *  io
@@ -155,7 +155,7 @@ ssize_t igloo_io_read(igloo_io_t *io, void *buffer, size_t len);
  * Returns:
  *  The actual amount of bytes written.
  */
-ssize_t igloo_io_write(igloo_io_t *io, const void *buffer, size_t len);
+ssize_t igloo_io_write(igloo_io_t *io, const void *buffer, size_t len, igloo_error_t *error);
 
 /* Flush internal buffers to the underlying object.
  * This does not guarantee that all data has been written to the physical level
@@ -166,7 +166,7 @@ ssize_t igloo_io_write(igloo_io_t *io, const void *buffer, size_t len);
  *  flags
  *      Flags for this operation.
  */
-int igloo_io_flush(igloo_io_t *io, igloo_io_opflag_t flags);
+igloo_error_t igloo_io_flush(igloo_io_t *io, igloo_io_opflag_t flags);
 /* Sync object with physical state. This is used to get the object into a state
  * that allows passing the underlying object to other software.
  * This may also flush internal buffers.
@@ -176,7 +176,7 @@ int igloo_io_flush(igloo_io_t *io, igloo_io_opflag_t flags);
  *  flags
  *      Flags for this operation.
  */
-int igloo_io_sync(igloo_io_t *io, igloo_io_opflag_t flags);
+igloo_error_t igloo_io_sync(igloo_io_t *io, igloo_io_opflag_t flags);
 
 /* Set and get the blocking state of the object.
  * Parameters:
@@ -185,8 +185,8 @@ int igloo_io_sync(igloo_io_t *io, igloo_io_opflag_t flags);
  *  mode
  *      The new blocking mode.
  */
-int igloo_io_set_blockingmode(igloo_io_t *io, libigloo_io_blockingmode_t mode);
-libigloo_io_blockingmode_t igloo_io_get_blockingmode(igloo_io_t *io);
+igloo_error_t igloo_io_set_blockingmode(igloo_io_t *io, libigloo_io_blockingmode_t mode);
+igloo_error_t igloo_io_get_blockingmode(igloo_io_t *io, libigloo_io_blockingmode_t *mode);
 
 #ifdef IGLOO_CTC_HAVE_SYS_SELECT_H
 /* Those functions act as igloo's replacement for FD_SET(), FD_CLR(), and FD_SET() and
@@ -208,8 +208,8 @@ libigloo_io_blockingmode_t igloo_io_get_blockingmode(igloo_io_t *io);
  *  to avoid this, as finding the correct parameters for igloo_io_sync() might be tricky.
  *  The object MUST NOT be touched between select() and igloo_io_select_isset().
  */
-int igloo_io_select_set(igloo_io_t *io, fd_set *set, int *maxfd, igloo_io_opflag_t flags);
-int igloo_io_select_clear(igloo_io_t *io, fd_set *set);
+igloo_error_t igloo_io_select_set(igloo_io_t *io, fd_set *set, int *maxfd, igloo_io_opflag_t flags);
+igloo_error_t igloo_io_select_clear(igloo_io_t *io, fd_set *set);
 int igloo_io_select_isset(igloo_io_t *io, fd_set *set);
 #endif
 
@@ -230,7 +230,7 @@ int igloo_io_select_isset(igloo_io_t *io, fd_set *set);
  *  poll() the user MUST call igloo_io_sync() with the correct flags. It is RECOMMENDED
  *  to avoid this, as finding the correct parameters for igloo_io_sync() might be tricky.
  */
-int igloo_io_poll_fill(igloo_io_t *io, struct pollfd *fd, short events);
+igloo_error_t igloo_io_poll_fill(igloo_io_t *io, struct pollfd *fd, short events);
 #endif
 
 /* Advanced control interface.
@@ -248,7 +248,7 @@ int igloo_io_poll_fill(igloo_io_t *io, struct pollfd *fd, short events);
  *      Additional parameters if any.
  *      Values are always passed as pointers.
  */
-int igloo_io_control(igloo_io_t *io, igloo_io_opflag_t flags, igloo_io_control_t control, ...);
+igloo_error_t igloo_io_control(igloo_io_t *io, igloo_io_opflag_t flags, igloo_io_control_t control, ...);
 
 #ifdef __cplusplus
 }
