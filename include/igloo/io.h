@@ -233,17 +233,6 @@ int igloo_io_select_isset(igloo_io_t *io, fd_set *set);
 int igloo_io_poll_fill(igloo_io_t *io, struct pollfd *fd, short events);
 #endif
 
-/* On a listen socket accept a new connection.
- * Parameters:
- *  io
- *      The IO handle to operate on.
- * Returns:
- *  The new connection or igloo_RO_NULL.
- */
-/* TODO: Allow accept to accept()'s and accept4()'s additional parameters.
-igloo_io_t *igloo_io_accept(igloo_io_t *io);
-*/
-
 /* Advanced control interface.
  * Parameters:
  *  io
