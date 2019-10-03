@@ -204,6 +204,164 @@ int igloo_socketaddr_get_sysid_protocol(igloo_socketaddr_protocol_t protocol)
     return -1;
 }
 
+igloo_error_t           igloo_socketaddr_domain2str(const char **str, igloo_socketaddr_domain_t domain)
+{
+    const char *ret = NULL;
+
+    if (!str)
+        return igloo_ERROR_FAULT;
+
+    switch (domain) {
+        case igloo_SOCKETADDR_DOMAIN_UNSPEC:
+            ret = "unspec";
+        break;
+        case igloo_SOCKETADDR_DOMAIN_UNIX:
+            ret = "unix";
+        break;
+        case igloo_SOCKETADDR_DOMAIN_INET4:
+            ret = "inet4";
+        break;
+        case igloo_SOCKETADDR_DOMAIN_INET6:
+            ret = "inet6";
+        break;
+    }
+
+    if (ret) {
+        *str = ret;
+        return igloo_ERROR_NONE;
+    } else {
+        return igloo_ERROR_NOENT;
+    }
+}
+
+igloo_error_t           igloo_socketaddr_str2domain(igloo_socketaddr_domain_t *domain, const char *str)
+{
+    if (!domain || !str)
+        return igloo_ERROR_FAULT;
+
+    if (strcasecmp(str, "unspec") == 0) {
+        *domain = igloo_SOCKETADDR_DOMAIN_UNSPEC;
+    } else if (strcasecmp(str, "unix") == 0) {
+        *domain = igloo_SOCKETADDR_DOMAIN_UNIX;
+    } else if (strcasecmp(str, "inet4") == 0 || strcasecmp(str, "legacy-inet") == 0) {
+        *domain = igloo_SOCKETADDR_DOMAIN_INET4;
+    } else if (strcasecmp(str, "inet6") == 0) {
+        *domain = igloo_SOCKETADDR_DOMAIN_INET6;
+    }
+
+    return igloo_ERROR_NOENT;
+}
+
+igloo_error_t           igloo_socketaddr_type2str(const char **str, igloo_socketaddr_type_t type)
+{
+    const char *ret = NULL;
+
+    if (!str)
+        return igloo_ERROR_FAULT;
+
+    switch (type) {
+        case igloo_SOCKETADDR_TYPE_UNSPEC:
+            ret = "unspec";
+        break;
+        case igloo_SOCKETADDR_TYPE_STREAM:
+            ret = "stream";
+        break;
+        case igloo_SOCKETADDR_TYPE_DGRAM:
+            ret = "dgram";
+        break;
+        case igloo_SOCKETADDR_TYPE_SEQPACK:
+            ret = "seqpack";
+        break;
+        case igloo_SOCKETADDR_TYPE_RDM:
+            ret = "rdm";
+        break;
+    }
+
+    if (ret) {
+        *str = ret;
+        return igloo_ERROR_NONE;
+    } else {
+        return igloo_ERROR_NOENT;
+    }
+}
+igloo_error_t           igloo_socketaddr_str2type(igloo_socketaddr_type_t *type, const char *str)
+{
+    if (!type || !str)
+        return igloo_ERROR_FAULT;
+
+    if (strcasecmp(str, "unspec") == 0) {
+        *type = igloo_SOCKETADDR_TYPE_UNSPEC;
+    } else if (strcasecmp(str, "stream") == 0) {
+        *type = igloo_SOCKETADDR_TYPE_STREAM;
+    } else if (strcasecmp(str, "dgram") == 0 || strcasecmp(str, "datagram") == 0) {
+        *type = igloo_SOCKETADDR_TYPE_DGRAM;
+    } else if (strcasecmp(str, "seqpack") == 0 || strcasecmp(str, "seqpacket") == 0) {
+        *type = igloo_SOCKETADDR_TYPE_SEQPACK;
+    } else if (strcasecmp(str, "rdm") == 0) {
+        *type = igloo_SOCKETADDR_TYPE_RDM;
+    }
+
+    return igloo_ERROR_NOENT;
+}
+
+igloo_error_t           igloo_socketaddr_protocol2str(const char **str, igloo_socketaddr_protocol_t protocol)
+{
+    const char *ret = NULL;
+
+    if (!str)
+        return igloo_ERROR_FAULT;
+
+    switch (protocol) {
+        case igloo_SOCKETADDR_PROTOCOL_UNSPEC:
+            ret = "unspec";
+        break;
+        case igloo_SOCKETADDR_PROTOCOL_TCP:
+            ret = "tcp";
+        break;
+        case igloo_SOCKETADDR_PROTOCOL_UDP:
+            ret = "udp";
+        break;
+        case igloo_SOCKETADDR_PROTOCOL_DCCP:
+            ret = "dccp";
+        break;
+        case igloo_SOCKETADDR_PROTOCOL_SCTP:
+            ret = "sctp";
+        break;
+        case igloo_SOCKETADDR_PROTOCOL_UDPLITE:
+            ret = "udplite";
+        break;
+    }
+
+    if (ret) {
+        *str = ret;
+        return igloo_ERROR_NONE;
+    } else {
+        return igloo_ERROR_NOENT;
+    }
+}
+igloo_error_t           igloo_socketaddr_str2protocol(igloo_socketaddr_protocol_t *protocol, const char *str)
+{
+    if (!protocol || !str)
+        return igloo_ERROR_FAULT;
+
+    if (strcasecmp(str, "unspec") == 0) {
+        *protocol = igloo_SOCKETADDR_PROTOCOL_UNSPEC;
+    } else if (strcasecmp(str, "tcp") == 0) {
+        *protocol = igloo_SOCKETADDR_PROTOCOL_TCP;
+    } else if (strcasecmp(str, "udp") == 0) {
+        *protocol = igloo_SOCKETADDR_PROTOCOL_UDP;
+    } else if (strcasecmp(str, "dccp") == 0) {
+        *protocol = igloo_SOCKETADDR_PROTOCOL_DCCP;
+    } else if (strcasecmp(str, "sctp") == 0) {
+        *protocol = igloo_SOCKETADDR_PROTOCOL_SCTP;
+    } else if (strcasecmp(str, "udplite") == 0 || strcasecmp(str, "udp-lite") == 0) {
+        *protocol = igloo_SOCKETADDR_PROTOCOL_UDPLITE;
+    }
+
+    return igloo_ERROR_NOENT;
+}
+
+
 void igloo_socketaddr_complete(igloo_socketaddr_t *addr)
 {
     if (!igloo_RO_IS_VALID(addr, igloo_socketaddr_t))

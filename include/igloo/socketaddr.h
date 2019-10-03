@@ -82,6 +82,17 @@ typedef enum {
     igloo_SOCKETADDR_PROTOCOL_UDPLITE
 } igloo_socketaddr_protocol_t;
 
+/* This set of functions convert Domain, Type, and Protocol representations between enum and string values.
+ *
+ * Those functions are very helpful for parsing and writing config files, and for debug and log output.
+ */
+igloo_error_t           igloo_socketaddr_domain2str(const char **str, igloo_socketaddr_domain_t domain);
+igloo_error_t           igloo_socketaddr_str2domain(igloo_socketaddr_domain_t *domain, const char *str);
+igloo_error_t           igloo_socketaddr_type2str(const char **str, igloo_socketaddr_type_t type);
+igloo_error_t           igloo_socketaddr_str2type(igloo_socketaddr_type_t *type, const char *str);
+igloo_error_t           igloo_socketaddr_protocol2str(const char **str, igloo_socketaddr_protocol_t protocol);
+igloo_error_t           igloo_socketaddr_str2protocol(igloo_socketaddr_protocol_t *protocol, const char *str);
+
 /* This creates a new address object.
  * Parameters:
  *  name, associated, instance
