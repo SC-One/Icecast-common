@@ -72,9 +72,9 @@ static void __free(igloo_ro_t self)
     __close_socket(sock->syssock);
 }
 
-static ssize_t __read(igloo_INTERFACE_BASIC_ARGS, void *buffer, size_t len, igloo_error_t *error)
+static ssize_t __read_with_flags(igloo_ro_t backend_object, void *buffer, size_t len, igloo_error_t *error, int flags)
 {
-    igloo_socket_t *sock = igloo_RO_TO_TYPE(*backend_object, igloo_socket_t);
+    igloo_socket_t *sock = igloo_RO_TO_TYPE(backend_object, igloo_socket_t);
     ssize_t ret = recv(sock->syssock, buffer, len, 0);
 
     if (ret < 0) {
@@ -84,6 +84,14 @@ static ssize_t __read(igloo_INTERFACE_BASIC_ARGS, void *buffer, size_t len, iglo
     }
 
     return ret;
+}
+static ssize_t __read(igloo_INTERFACE_BASIC_ARGS, void *buffer, size_t len, igloo_error_t *error)
+{
+    return __read_with_flags(*backend_object, buffer, len, error, 0);
+}
+static ssize_t __peek(igloo_INTERFACE_BASIC_ARGS, void *buffer, size_t len, igloo_error_t *error)
+{
+    return __read_with_flags(*backend_object, buffer, len, error, MSG_PEEK);
 }
 static ssize_t __write(igloo_INTERFACE_BASIC_ARGS, const void *buffer, size_t len, igloo_error_t *error)
 {
@@ -176,6 +184,7 @@ static igloo_error_t __get_fd_for_systemcall(igloo_INTERFACE_BASIC_ARGS, int *fd
 static const igloo_io_ifdesc_t igloo_socket_io_ifdesc = {
     igloo_INTERFACE_DESCRIPTION_BASE(igloo_io_ifdesc_t),
     .read = __read,
+    .peek = __peek,
     .write = __write,
     .sync = __sync,
     .set_blockingmode = __set_blockingmode,
