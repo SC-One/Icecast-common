@@ -2,7 +2,7 @@
 
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = avl httpp log net thread
+SUBDIRS = avl httpp log thread
 
 lib_LTLIBRARIES = libigloo.la
 
@@ -14,7 +14,6 @@ pkginclude_HEADERS = \
     include/igloo/igloo.h \
     include/igloo/log.h \
     include/igloo/resolver.h \
-    include/igloo/sock.h \
     include/igloo/thread.h \
     include/igloo/timing.h \
     include/igloo/ro.h \
@@ -56,7 +55,6 @@ libigloo_la_LIBADD = \
     avl/libiceavl.la \
     httpp/libicehttpp.la \
     log/libicelog.la \
-    net/libicenet.la \
     thread/libicethread.la
 
 pkgconfig_DATA = igloo.pc
