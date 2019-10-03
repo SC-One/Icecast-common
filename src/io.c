@@ -58,30 +58,33 @@ igloo_io_t * igloo_io_new(const igloo_io_ifdesc_t *ifdesc, igloo_ro_t backend_ob
     return io;
 }
 
-
-ssize_t igloo_io_read(igloo_io_t *io, void *buffer, size_t len, igloo_error_t *error)
-{
-    ssize_t ret = -1;
-    igloo_error_t error_store;
-
-    if (!io || !buffer)
-        return -1;
-
-    if (!len)
-        return 0;
-
-    if (!error)
-        error = &error_store;
-
-    igloo_thread_mutex_lock(&(io->lock));
-    io->touched = 1;
-
-    if (io->ifdesc->read)
-        ret = io->ifdesc->read(igloo_INTERFACE_BASIC_CALL(io), buffer, len, error);
-    igloo_thread_mutex_unlock(&(io->lock));
-
-    return ret;
+#define __read_fun(x) \
+ssize_t igloo_io_ ## x (igloo_io_t *io, void *buffer, size_t len, igloo_error_t *error) \
+{ \
+    ssize_t ret = -1; \
+    igloo_error_t error_store; \
+\
+    if (!io || !buffer) \
+        return -1; \
+\
+    if (!len) \
+        return 0; \
+\
+    if (!error) \
+        error = &error_store; \
+\
+    igloo_thread_mutex_lock(&(io->lock)); \
+    io->touched = 1; \
+\
+    if (io->ifdesc->x) \
+        ret = io->ifdesc->x(igloo_INTERFACE_BASIC_CALL(io), buffer, len, error); \
+    igloo_thread_mutex_unlock(&(io->lock)); \
+\
+    return ret; \
 }
+
+__read_fun(read)
+__read_fun(peek)
 
 ssize_t igloo_io_write(igloo_io_t *io, const void *buffer, size_t len, igloo_error_t *error)
 {

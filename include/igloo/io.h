@@ -106,6 +106,7 @@ typedef struct {
     igloo_interface_base_ifdesc_t __base;
 
     ssize_t (*read)(igloo_INTERFACE_BASIC_ARGS, void *buffer, size_t len, igloo_error_t *error);
+    ssize_t (*peek)(igloo_INTERFACE_BASIC_ARGS, void *buffer, size_t len, igloo_error_t *error);
     ssize_t (*write)(igloo_INTERFACE_BASIC_ARGS, const void *buffer, size_t len, igloo_error_t *error);
     igloo_error_t (*flush)(igloo_INTERFACE_BASIC_ARGS, igloo_io_opflag_t flags);
     igloo_error_t (*sync)(igloo_INTERFACE_BASIC_ARGS, igloo_io_opflag_t flags);
@@ -144,6 +145,13 @@ igloo_io_t * igloo_io_new(const igloo_io_ifdesc_t *ifdesc, igloo_ro_t backend_ob
  *  The actual amount of bytes read.
  */
 ssize_t igloo_io_read(igloo_io_t *io, void *buffer, size_t len, igloo_error_t *error);
+
+/* Peeks on the input side of the handle.
+ *
+ * This does the same as igloo_io_read() expect that the data is not removed from the read queue.
+ * This is likely not to be supported by some backends.
+ */
+ssize_t igloo_io_peek(igloo_io_t *io, void *buffer, size_t len, igloo_error_t *error);
 /* Write data to a IO handle.
  * Parameters:
  *  io
