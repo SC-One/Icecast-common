@@ -346,7 +346,7 @@ static igloo_error_t _get_service(igloo_socketaddr_t *addr, const char *name, ui
             proto = "tcp";
         break;
         case igloo_SOCKETADDR_PROTOCOL_UDP:
-            proto = "tcp";
+            proto = "udp";
         break;
         case igloo_SOCKETADDR_PROTOCOL_DCCP:
             proto = "dccp";
