@@ -15,6 +15,7 @@
 
 #include <igloo/ro.h>
 #include <igloo/io.h>
+#include <igloo/error.h>
 #include "private.h"
 
 struct igloo_io_tag {
@@ -57,13 +58,51 @@ igloo_io_t * igloo_io_new(const igloo_io_ifdesc_t *ifdesc, igloo_ro_t backend_ob
     return io;
 }
 
+#define __read_fun(x) \
+ssize_t igloo_io_ ## x (igloo_io_t *io, void *buffer, size_t len, igloo_error_t *error) \
+{ \
+    ssize_t ret = -1; \
+    igloo_error_t error_store; \
+\
+    if (!error) \
+        error = &error_store; \
+\
+    if (!io || !buffer) {\
+        *error = igloo_ERROR_FAULT; \
+        return -1; \
+    } \
+\
+    if (!len) \
+        return 0; \
+\
+    igloo_thread_mutex_lock(&(io->lock)); \
+    io->touched = 1; \
+\
+    if (io->ifdesc->x) {\
+        ret = io->ifdesc->x(igloo_INTERFACE_BASIC_CALL(io), buffer, len, error); \
+    } else { \
+        *error = igloo_ERROR_GENERIC; \
+    } \
+    igloo_thread_mutex_unlock(&(io->lock)); \
+\
+    return ret; \
+}
 
-ssize_t igloo_io_read(igloo_io_t *io, void *buffer, size_t len)
+__read_fun(read)
+__read_fun(peek)
+
+ssize_t igloo_io_write(igloo_io_t *io, const void *buffer, size_t len, igloo_error_t *error)
 {
     ssize_t ret = -1;
+    igloo_error_t error_store;
 
-    if (!io || !buffer)
+    if (!error)
+        error = &error_store;
+
+    if (!io || !buffer) {
+        *error = igloo_ERROR_FAULT;
         return -1;
+    }
 
     if (!len)
         return 0;
@@ -71,39 +110,22 @@ ssize_t igloo_io_read(igloo_io_t *io, void *buffer, size_t len)
     igloo_thread_mutex_lock(&(io->lock));
     io->touched = 1;
 
-    if (io->ifdesc->read)
-        ret = io->ifdesc->read(igloo_INTERFACE_BASIC_CALL(io), buffer, len);
+    if (io->ifdesc->write) {
+        ret = io->ifdesc->write(igloo_INTERFACE_BASIC_CALL(io), buffer, len, error);
+    } else {
+        *error = igloo_ERROR_GENERIC;
+    }
     igloo_thread_mutex_unlock(&(io->lock));
 
     return ret;
 }
 
-ssize_t igloo_io_write(igloo_io_t *io, const void *buffer, size_t len)
+igloo_error_t igloo_io_flush(igloo_io_t *io, igloo_io_opflag_t flags)
 {
-    ssize_t ret = -1;
-
-    if (!io || !buffer)
-        return -1;
-
-    if (!len)
-        return 0;
-
-    igloo_thread_mutex_lock(&(io->lock));
-    io->touched = 1;
-
-    if (io->ifdesc->write)
-        ret = io->ifdesc->write(igloo_INTERFACE_BASIC_CALL(io), buffer, len);
-    igloo_thread_mutex_unlock(&(io->lock));
-
-    return ret;
-}
-
-int igloo_io_flush(igloo_io_t *io, igloo_io_opflag_t flags)
-{
-    int ret = -1;
+    igloo_error_t ret = igloo_ERROR_GENERIC;
 
     if (!io)
-        return -1;
+        return igloo_ERROR_FAULT;
 
     igloo_thread_mutex_lock(&(io->lock));
     io->touched = 1;
@@ -115,12 +137,12 @@ int igloo_io_flush(igloo_io_t *io, igloo_io_opflag_t flags)
     return ret;
 }
 
-int igloo_io_sync(igloo_io_t *io, igloo_io_opflag_t flags)
+igloo_error_t igloo_io_sync(igloo_io_t *io, igloo_io_opflag_t flags)
 {
-    int ret;
+    igloo_error_t ret;
 
     if (!io)
-        return -1;
+        return igloo_ERROR_FAULT;
 
     igloo_thread_mutex_lock(&(io->lock));
     if (io->ifdesc->flush)
@@ -128,7 +150,7 @@ int igloo_io_sync(igloo_io_t *io, igloo_io_opflag_t flags)
 
     if (io->ifdesc->sync) {
         ret = io->ifdesc->sync(igloo_INTERFACE_BASIC_CALL(io), flags);
-        if (ret != 0) {
+        if (ret != igloo_ERROR_NONE) {
             igloo_thread_mutex_unlock(&(io->lock));
             return ret;
         }
@@ -140,18 +162,18 @@ int igloo_io_sync(igloo_io_t *io, igloo_io_opflag_t flags)
     }
     igloo_thread_mutex_unlock(&(io->lock));
 
-    return -1;
+    return igloo_ERROR_GENERIC;
 }
 
-int igloo_io_set_blockingmode(igloo_io_t *io, libigloo_io_blockingmode_t mode)
+igloo_error_t igloo_io_set_blockingmode(igloo_io_t *io, libigloo_io_blockingmode_t mode)
 {
-    int ret = -1;
+    igloo_error_t ret = igloo_ERROR_GENERIC;
 
     if (!io)
-        return -1;
+        return igloo_ERROR_FAULT;
 
     if (mode != igloo_IO_BLOCKINGMODE_NONE && mode != igloo_IO_BLOCKINGMODE_FULL)
-        return -1;
+        return igloo_ERROR_INVAL;
 
     igloo_thread_mutex_lock(&(io->lock));
     io->touched = 1;
@@ -162,52 +184,60 @@ int igloo_io_set_blockingmode(igloo_io_t *io, libigloo_io_blockingmode_t mode)
 
     return ret;
 }
-libigloo_io_blockingmode_t igloo_io_get_blockingmode(igloo_io_t *io)
+igloo_error_t igloo_io_get_blockingmode(igloo_io_t *io, libigloo_io_blockingmode_t *mode)
 {
     libigloo_io_blockingmode_t ret = igloo_IO_BLOCKINGMODE_ERROR;
+    igloo_error_t error = igloo_ERROR_GENERIC;
 
-    if (!io)
-        return igloo_IO_BLOCKINGMODE_ERROR;
+    if (!io || !mode)
+        return igloo_ERROR_FAULT;
 
     igloo_thread_mutex_lock(&(io->lock));
     if (io->ifdesc->get_blockingmode)
-        ret = io->ifdesc->get_blockingmode(igloo_INTERFACE_BASIC_CALL(io));
+        error = io->ifdesc->get_blockingmode(igloo_INTERFACE_BASIC_CALL(io), &ret);
     igloo_thread_mutex_unlock(&(io->lock));
 
-    return ret;
+    if (error != igloo_ERROR_NONE)
+        return error;
+
+    *mode = ret;
+
+    return igloo_ERROR_NONE;
 }
 
 #ifdef IGLOO_CTC_HAVE_SYS_SELECT_H
-int igloo_io_select_set(igloo_io_t *io, fd_set *set, int *maxfd, igloo_io_opflag_t flags)
+igloo_error_t igloo_io_select_set(igloo_io_t *io, fd_set *set, int *maxfd, igloo_io_opflag_t flags)
 {
-    int ret;
+    igloo_error_t ret;
 
     if (!io || !set || !maxfd)
-        return -1;
+        return igloo_ERROR_FAULT;
 
     igloo_thread_mutex_lock(&(io->lock));
     if (!io->ifdesc->get_fd_for_systemcall) {
         igloo_thread_mutex_unlock(&(io->lock));
-        return -1;
+        return igloo_ERROR_GENERIC;
     }
 
     if (io->touched || !(flags & igloo_IO_OPFLAG_NOWRITE)) {
         igloo_thread_mutex_unlock(&(io->lock));
         ret = igloo_io_sync(io, igloo_IO_OPFLAG_DEFAULTS|(flags & igloo_IO_OPFLAG_NOWRITE));
 
-        if (ret != 0)
+        if (ret != igloo_ERROR_NONE)
             return ret;
 
         igloo_thread_mutex_lock(&(io->lock));
         if (io->touched) {
             igloo_thread_mutex_unlock(&(io->lock));
-            return -1;
+            return igloo_ERROR_GENERIC;
         }
     }
 
-    io->fd = io->ifdesc->get_fd_for_systemcall(igloo_INTERFACE_BASIC_CALL(io));
+    ret = io->ifdesc->get_fd_for_systemcall(igloo_INTERFACE_BASIC_CALL(io), &(io->fd));
+    if (ret != igloo_ERROR_NONE)
+        return ret;
     if (io->fd < 0)
-        return -1;
+        return igloo_ERROR_GENERIC;
 
     FD_SET(io->fd, set);
     if (*maxfd < io->fd)
@@ -215,24 +245,24 @@ int igloo_io_select_set(igloo_io_t *io, fd_set *set, int *maxfd, igloo_io_opflag
 
     igloo_thread_mutex_unlock(&(io->lock));
 
-    return 0;
+    return igloo_ERROR_NONE;
 }
 
-int igloo_io_select_clear(igloo_io_t *io, fd_set *set)
+igloo_error_t igloo_io_select_clear(igloo_io_t *io, fd_set *set)
 {
     if (!io || !set)
-        return -1;
+        return igloo_ERROR_FAULT;
 
     igloo_thread_mutex_lock(&(io->lock));
     if (io->touched || io->fd < 0) {
         igloo_thread_mutex_unlock(&(io->lock));
-        return -1;
+        return igloo_ERROR_GENERIC;
     }
 
     FD_CLR(io->fd, set);
     igloo_thread_mutex_unlock(&(io->lock));
 
-    return 0;
+    return igloo_ERROR_GENERIC;
 }
 
 int igloo_io_select_isset(igloo_io_t *io, fd_set *set)
@@ -252,7 +282,7 @@ int igloo_io_select_isset(igloo_io_t *io, fd_set *set)
 #endif
 
 #ifdef IGLOO_CTC_HAVE_POLL
-int igloo_io_poll_fill(igloo_io_t *io, struct pollfd *fd, short events)
+igloo_error_t igloo_io_poll_fill(igloo_io_t *io, struct pollfd *fd, short events)
 {
     static const short safe_events = POLLIN|POLLPRI
 #ifdef POLLRDHUP
@@ -266,14 +296,14 @@ int igloo_io_poll_fill(igloo_io_t *io, struct pollfd *fd, short events)
     int ret;
 
     if (!io || !fd)
-        return -1;
+        return igloo_ERROR_FAULT;
 
     is_safe = !((events|safe_events) - safe_events);
 
     igloo_thread_mutex_lock(&(io->lock));
     if (!io->ifdesc->get_fd_for_systemcall) {
         igloo_thread_mutex_unlock(&(io->lock));
-        return -1;
+        return igloo_ERROR_GENERIC;
     }
 
     if (io->touched || !is_safe) {
@@ -286,14 +316,17 @@ int igloo_io_poll_fill(igloo_io_t *io, struct pollfd *fd, short events)
         igloo_thread_mutex_lock(&(io->lock));
         if (io->touched) {
             igloo_thread_mutex_unlock(&(io->lock));
-            return -1;
+            return igloo_ERROR_GENERIC;
         }
     }
 
-    io->fd = io->ifdesc->get_fd_for_systemcall(igloo_INTERFACE_BASIC_CALL(io));
+    ret = io->ifdesc->get_fd_for_systemcall(igloo_INTERFACE_BASIC_CALL(io), &(io->fd));
     if (io->fd < 0) {
+        ret = igloo_ERROR_GENERIC;
+    }
+    if (ret != igloo_ERROR_NONE) {
         igloo_thread_mutex_unlock(&(io->lock));
-        return -1;
+        return igloo_ERROR_GENERIC;
     }
 
     memset(fd, 0, sizeof(*fd));
@@ -306,14 +339,14 @@ int igloo_io_poll_fill(igloo_io_t *io, struct pollfd *fd, short events)
 }
 #endif
 
-int igloo_io_control(igloo_io_t *io, igloo_io_opflag_t flags, igloo_io_control_t control, ...)
+igloo_error_t igloo_io_control(igloo_io_t *io, igloo_io_opflag_t flags, igloo_io_control_t control, ...)
 {
 #ifdef IGLOO_CTC_STDC_HEADERS
-    int ret = -1;
+    igloo_error_t ret = igloo_ERROR_GENERIC;
     va_list ap;
 
     if (!io)
-        return -1;
+        return igloo_ERROR_FAULT;
 
     igloo_thread_mutex_lock(&(io->lock));
     if (io->ifdesc->control) {
@@ -325,6 +358,6 @@ int igloo_io_control(igloo_io_t *io, igloo_io_opflag_t flags, igloo_io_control_t
 
     return ret;
 #else
-    return -1;
+    return igloo_ERROR_GENERIC;
 #endif
 }

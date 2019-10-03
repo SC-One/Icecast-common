@@ -227,7 +227,7 @@ static igloo_filter_result_t __handle(igloo_INTERFACE_BASIC_ARGS, igloo_ro_t obj
         break;
     }
 
-    igloo_io_write(igloo_RO_TO_TYPE(*backend_object, igloo_io_t), pre, strlen(pre));
+    igloo_io_write(igloo_RO_TO_TYPE(*backend_object, igloo_io_t), pre, strlen(pre), NULL);
 
     return igloo_FILTER_RESULT_PASS;
 }
@@ -239,7 +239,7 @@ static int __flush(igloo_INTERFACE_BASIC_ARGS)
     if (!io)
         return 0;
 
-    return igloo_io_flush(io, igloo_IO_OPFLAG_DEFAULTS|igloo_IO_OPFLAG_FULL);
+    return igloo_io_flush(io, igloo_IO_OPFLAG_DEFAULTS|igloo_IO_OPFLAG_FULL) == igloo_ERROR_NONE ? 0 : -1;
 }
 
 static int __set_backend(igloo_INTERFACE_BASIC_ARGS, igloo_ro_t backend)

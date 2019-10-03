@@ -13,6 +13,7 @@
 #include <stdio.h>
 
 #include <igloo/io.h>
+#include <igloo/error.h>
 
 static int __free(igloo_INTERFACE_BASIC_ARGS)
 {
@@ -22,30 +23,48 @@ static int __free(igloo_INTERFACE_BASIC_ARGS)
 }
 
 
-static ssize_t __read(igloo_INTERFACE_BASIC_ARGS, void *buffer, size_t len)
+static ssize_t __read(igloo_INTERFACE_BASIC_ARGS, void *buffer, size_t len, igloo_error_t *error)
 {
-    return fread(buffer, 1, len, *backend_userdata);
+    ssize_t ret = fread(buffer, 1, len, *backend_userdata);
+
+    if (ret < 0) {
+        *error = igloo_ERROR_IO;
+    } else {
+        *error = igloo_ERROR_NONE;
+    }
+
+    return ret;
 }
-static ssize_t __write(igloo_INTERFACE_BASIC_ARGS, const void *buffer, size_t len)
+static ssize_t __write(igloo_INTERFACE_BASIC_ARGS, const void *buffer, size_t len, igloo_error_t *error)
 {
-    return fwrite(buffer, 1, len, *backend_userdata);
+    ssize_t ret = fwrite(buffer, 1, len, *backend_userdata);
+
+    if (ret < 0) {
+        *error = igloo_ERROR_IO;
+    } else {
+        *error = igloo_ERROR_NONE;
+    }
+
+    return ret;
 }
 
-static int __flush(igloo_INTERFACE_BASIC_ARGS, igloo_io_opflag_t flags)
+static igloo_error_t __flush(igloo_INTERFACE_BASIC_ARGS, igloo_io_opflag_t flags)
 {
-    return fflush(*backend_userdata) == 0 ? 0 : -1;
+    return fflush(*backend_userdata) == 0 ? igloo_ERROR_NONE : igloo_ERROR_GENERIC;
 }
-static int __sync(igloo_INTERFACE_BASIC_ARGS, igloo_io_opflag_t flags)
+static igloo_error_t __sync(igloo_INTERFACE_BASIC_ARGS, igloo_io_opflag_t flags)
 {
-    return 0;
+    return igloo_ERROR_NONE;
 }
-static libigloo_io_blockingmode_t __get_blockingmode(igloo_INTERFACE_BASIC_ARGS)
+static igloo_error_t __get_blockingmode(igloo_INTERFACE_BASIC_ARGS, libigloo_io_blockingmode_t *mode)
 {
-    return igloo_IO_BLOCKINGMODE_FULL;
+    *mode = igloo_IO_BLOCKINGMODE_FULL;
+    return igloo_ERROR_NONE;
 }
-static int __get_fd_for_systemcall(igloo_INTERFACE_BASIC_ARGS)
+static igloo_error_t __get_fd_for_systemcall(igloo_INTERFACE_BASIC_ARGS, int *fd)
 {
-    return fileno(*backend_userdata);
+    *fd = fileno(*backend_userdata);
+    return igloo_ERROR_NONE;
 }
 
 static const igloo_io_ifdesc_t igloo_stdio_ifdesc = {
