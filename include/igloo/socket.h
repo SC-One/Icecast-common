@@ -58,8 +58,17 @@ typedef enum {
 /* Advanced control functions.
  */
 typedef enum {
+    /* No operation.
+     * Parameters: None.
+     */
     igloo_SOCKET_CONTROL_NONE = 0,
+    /* Set no delay options.
+     * Parameters: None.
+     */
     igloo_SOCKET_CONTROL_SET_NODELAY,
+    /* Set send and receive buffers
+     * Parameters: (size_t)buffersize.
+     */
     igloo_SOCKET_CONTROL_SET_SEND_BUFFER,
     igloo_SOCKET_CONTROL_SET_RECEIVE_BUFFER
 } igloo_socket_control_t;
