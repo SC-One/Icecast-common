@@ -90,14 +90,83 @@ typedef enum {
  *      Domain, Type, and Protocol for the new address. Can be igloo_SOCKETADDR_*_UNSPEC.
  */
 igloo_socketaddr_t *    igloo_socketaddr_new(igloo_socketaddr_domain_t domain, igloo_socketaddr_type_t type, igloo_socketaddr_protocol_t protocol, const char *name, igloo_ro_t associated, igloo_ro_t instance, igloo_error_t *error);
+
+/* Gets base information on the address.
+ * Parameters:
+ *  addr
+ *      The address to operate on.
+ *  domain, type, protocol
+ *      The address' Domain, Type, and Protocol.
+ */
 igloo_error_t           igloo_socketaddr_get_base(igloo_socketaddr_t *addr, igloo_socketaddr_domain_t *domain, igloo_socketaddr_type_t *type, igloo_socketaddr_protocol_t *protocol);
+
+/* Get or set the address' node value.
+ *
+ * The Node is a protocol dependent representation of a node on the network.
+ * This might be a nodename or hostname, an IP address, a MAC address or anything else
+ * that identifies the node.
+ *
+ * Parameters:
+ *  addr
+ *      The address to operate on.
+ *  node
+ *      The node value to set or get.
+ */
 
 igloo_error_t           igloo_socketaddr_set_node(igloo_socketaddr_t *addr, const char *node);
 igloo_error_t           igloo_socketaddr_get_node(igloo_socketaddr_t *addr, const char **node);
+/* Get the IP address of the address
+ *
+ * This gets the currently used IP address for the address if any.
+ * The IP address can not be set directly. Use igloo_socketaddr_set_node() to set the node.
+ *
+ * See also igloo_socketaddr_set_node().
+ *
+ *  addr
+ *      The address to operate on.
+ *  ip
+ *      The ip address used in the address.
+ */
 igloo_error_t           igloo_socketaddr_get_ip  (igloo_socketaddr_t *addr, const char **ip);
+
+/* Get or set the addresse' port number.
+ *
+ * This sets or get the port number for addresses of domains that use ports.
+ *
+ * See also igloo_socketaddr_set_service().
+ *
+ * Parameters:
+ *  addr
+ *      The address to operate on.
+ *  port
+ *      The port value to set or get.
+ */
 igloo_error_t           igloo_socketaddr_set_port(igloo_socketaddr_t *addr, uint16_t port);
 igloo_error_t           igloo_socketaddr_get_port(igloo_socketaddr_t *addr, uint16_t *port);
+
+/* Set the service to use for the address.
+ * 
+ * For port based domains this takes the port name or number as a string.
+ * This is very useful for parsing user input.
+ *
+ * Parameters:
+ *  addr
+ *      The address to operate on.
+ *  service
+ *      The service to set.
+ */
 igloo_error_t           igloo_socketaddr_set_service(igloo_socketaddr_t *addr, const char *service);
+
+/* Get or set the addresse' path.
+ *
+ * This sets or get the path for addresses of domains that use paths.
+ *
+ * Parameters:
+ *  addr
+ *      The address to operate on.
+ *  path
+ *      The path value to set or get.
+ */
 igloo_error_t           igloo_socketaddr_set_path(igloo_socketaddr_t *addr, const char *path);
 igloo_error_t           igloo_socketaddr_get_path(igloo_socketaddr_t *addr, const char **path);
 
