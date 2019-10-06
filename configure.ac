@@ -169,7 +169,6 @@ AC_CONFIG_FILES([
   httpp/Makefile
   thread/Makefile
   log/Makefile
-  net/Makefile
   igloo.pc
 ])
 
