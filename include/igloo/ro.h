@@ -281,10 +281,22 @@ int             igloo_RO_HAS_TYPE_raw(igloo_ro_t object, const igloo_ro_type_t *
 
 #define igloo_RO_IS_SAME(a,b)       (igloo_RO__GETBASE((a)) == igloo_RO__GETBASE((b)))
 
-/* Create a new refobject
- * The type argument gives the type for the new object,
- * the name for the object is given by name, and
- * the associated refobject is given by associated.
+/* Create a new refobject.
+ *
+ * Parameters:
+ *  type
+ *      The type of new object to create.
+ *  name
+ *      The name of the object to create or NULL.
+ *  associated
+ *      The object that is associated with this object or igloo_RO_NULL.
+ *  instance
+ *      The instance of libigloo to use to create this object.
+ *      If an non-instance object is given the same instance is used as used for that object.
+ *      This allows easy building of child objects without the need to carry around the instance
+ *      object.
+ *      If igloo_RO_NULL libigloo will try to find a suitable instance. This is deprecated. And
+ *      future versions my enforce a non-igloo_RO_NULL value.
  */
 
 igloo_ro_t      igloo_ro_new__raw(const igloo_ro_type_t *type, const char *name, igloo_ro_t associated, igloo_ro_t instance);
