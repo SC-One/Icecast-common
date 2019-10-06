@@ -78,7 +78,7 @@ typedef unsigned long int igloo_logmsg_opt_t;
 /* This creates a new log message.
  * Parameters:
  *  name, associated
- *      See refobject_new().
+ *      See igloo_ro_new().
  *  msgid
  *      Message ID used to correlate messages of the same type.
  *      Used e.g. with igloo_LOGMSG_OPT_ASKACK.
@@ -162,7 +162,7 @@ int igloo_logmsg_get_extra(igloo_logmsg_t *msg, igloo_logmsg_opt_t *options, igl
  *  	Subformat to use. NULL for default.
  *  	Must be NULL.
  *  name, associated
- *      See refobject_new().
+ *      See igloo_ro_new().
  */
 igloo_objecthandler_t 	* igloo_logmsg_formarter(igloo_ro_t backend, const char *subformat, const char *name, igloo_ro_t associated, igloo_ro_t instance);
 
@@ -183,7 +183,7 @@ igloo_objecthandler_t 	* igloo_logmsg_formarter(igloo_ro_t backend, const char *
  *  cat
  *      Message category/module or NULL.
  *  name, associated
- *      See refobject_new().
+ *      See igloo_ro_new().
  */
 igloo_filter_t 		* igloo_logmsg_filter(igloo_loglevel_t level_min, igloo_loglevel_t level_max, igloo_logmsg_opt_t options_required, igloo_logmsg_opt_t options_absent, const struct timespec * ts_min, const struct timespec * ts_max, const char *cat, const char *name, igloo_ro_t associated, igloo_ro_t instance);
 

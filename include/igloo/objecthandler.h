@@ -69,7 +69,7 @@ typedef struct {
  *  backend_userdata
  *      A userdata pointer used by the backend or NULL.
  *  name, associated
- *      See refobject_new().
+ *      See igloo_ro_new().
  */
 igloo_objecthandler_t * igloo_objecthandler_new(const igloo_objecthandler_ifdesc_t *ifdesc, igloo_ro_t backend_object, void *backend_userdata, const char *name, igloo_ro_t associated, igloo_ro_t instance);
 
