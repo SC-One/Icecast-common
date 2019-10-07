@@ -71,9 +71,7 @@ static void igloo_initialize__free(igloo_ro_t self)
     if (igloo_initialize__refc)
         return;
 
-    igloo_resolver_shutdown();
     igloo_socketaddr_shutdown();
-    igloo_sock_shutdown();
     igloo_thread_shutdown();
     igloo_log_shutdown();
 }
@@ -86,8 +84,6 @@ igloo_ro_t     igloo_initialize(void)
     if (!igloo_initialize__refc) {
         igloo_log_initialize();
         igloo_thread_initialize();
-        igloo_sock_initialize();
-        igloo_resolver_initialize();
         igloo_socketaddr_initialize();
     }
 
