@@ -280,6 +280,9 @@ int httpp_parse_postdata(http_parser_t *parser, const char *body_data, size_t le
 {
     const char *header = httpp_getvar(parser, "content-type");
 
+    if (!header)
+        return -1;
+
     if (strcasecmp(header, "application/x-www-form-urlencoded") != 0) {
         return -1;
     }
