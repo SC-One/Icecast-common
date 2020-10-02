@@ -439,6 +439,39 @@ void log_contents (int log_id, char **_contents, unsigned int *_len)
     _unlock_logger ();
 }
 
+char ** log_contents_array(int log_id)
+{
+    log_entry_t *entry;
+    char **ret;
+    size_t i;
+
+    if (log_id < 0) return NULL;
+    if (log_id >= LOG_MAXLOGS) return NULL; /* Bad log number */
+
+    _lock_logger();
+    ret = calloc(loglist[log_id].entries + 1, sizeof(char*));
+    if (!ret) {
+        _unlock_logger();
+        return NULL;
+    }
+
+    i = 0;
+    entry = loglist[log_id].log_head;
+    while (entry) {
+        ret[i] = malloc(entry->len);
+        memcpy(ret[i], entry->line, entry->len);
+        if (ret[i][entry->len-2] == '\n')
+            ret[i][entry->len-2] = 0;
+        entry = entry->next;
+        i++;
+    }
+    ret[i] = NULL;
+
+    _unlock_logger();
+
+    return ret;
+}
+
 static inline int __vsnprintf__is_print(int c, int allow_space)
 {
     if ((c <= '"' || c == '`' || c == '\\') && !(allow_space && c == ' ')) {
