@@ -358,7 +358,6 @@ igloo_ro_t      igloo_ro_get_instance(igloo_ro_t self)
      */
     if (!igloo_RO_IS_NULL(ret)) {
         if (igloo_ro_ref(ret) != igloo_ERROR_NONE) {
-            igloo_thread_mutex_unlock(&(base->lock));
             return igloo_RO_NULL;
         }
     }
