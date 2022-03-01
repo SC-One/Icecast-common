@@ -653,8 +653,8 @@ static void __vsnprintf(char *str, size_t size, const char *format, va_list ap) 
                                 } else {
                                     *(str++) = '\\';
                                     *(str++) = 'x';
-                                    *(str++) = hextable[(*arg >> 0) & 0x0F];
                                     *(str++) = hextable[(*arg >> 4) & 0x0F];
+                                    *(str++) = hextable[(*arg >> 0) & 0x0F];
                                     /* Also count the additional chars for string size and block length */
                                     size -= 3;
                                     block_len -= 3;
