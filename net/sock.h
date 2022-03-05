@@ -70,6 +70,15 @@ struct iovec
 #define SOCK_ERROR (sock_t)-1
 #define SOCK_TIMEOUT -2
 
+typedef enum {
+    SOCK_FAMILY__ERROR = -1,
+    SOCK_FAMILY_UNSPEC =  0,
+    SOCK_FAMILY_UNIX,
+    SOCK_FAMILY_INET4,
+    SOCK_FAMILY_INET6,
+    SOCK_FAMILY_DECnet
+} sock_family_t;
+
 /* sock connect macro */
 #define sock_connect(h, p) sock_connect_wto(h, p, 0)
 
@@ -102,6 +111,8 @@ struct iovec
 # define sock_listen _mangle(sock_listen)
 # define sock_set_send_buffer _mangle(sock_set_send_buffer)
 # define sock_accept _mangle(sock_accept)
+# define sock_get_family _mangle(sock_get_family)
+# define sock_family_to_string _mangle(sock_family_to_string)
 #endif
 
 /* Misc socket functions */
@@ -143,6 +154,10 @@ int sock_read_line(sock_t sock, char *string, const int len);
 sock_t sock_get_server_socket(int port, const char *sinterface);
 int sock_listen(sock_t serversock, int backlog);
 sock_t sock_accept(sock_t serversock, char *ip, size_t len);
+
+/* Socket information */
+sock_family_t sock_get_family(sock_t sock);
+const char * sock_family_to_string(sock_family_t family);
 
 #ifdef _WIN32
 int inet_aton(const char *s, struct in_addr *a);

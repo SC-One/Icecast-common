@@ -961,3 +961,48 @@ sock_t sock_accept(sock_t serversock, char *ip, size_t len)
     return ret;
 }
 
+sock_family_t sock_get_family(sock_t sock)
+{
+    struct sockaddr addr;
+    socklen_t len = sizeof(addr);
+
+    if (getsockname(sock, &addr, &len) != 0)
+        return SOCK_FAMILY__ERROR;
+
+    if (len < sizeof(addr.sa_family))
+        return SOCK_FAMILY__ERROR;
+
+    switch (addr.sa_family) {
+#ifdef AF_UNSPEC
+        case AF_UNSPEC: return SOCK_FAMILY_UNSPEC; break;
+#endif
+#ifdef AF_UNIX
+        case AF_UNIX: return SOCK_FAMILY_UNIX; break;
+#endif
+#ifdef AF_INET
+        case AF_INET: return SOCK_FAMILY_INET4; break;
+#endif
+#ifdef AF_INET6
+        case AF_INET6: return SOCK_FAMILY_INET6; break;
+#endif
+#ifdef AF_DECnet
+        case AF_DECnet: return SOCK_FAMILY_DECnet; break;
+#endif
+    }
+
+    return SOCK_FAMILY__ERROR;
+}
+
+const char * sock_family_to_string(sock_family_t family)
+{
+    switch (family) {
+        case SOCK_FAMILY__ERROR: return "<error>"; break;
+        case SOCK_FAMILY_UNSPEC: return "UNSPEC"; break;
+        case SOCK_FAMILY_UNIX: return "UNIX"; break;
+        case SOCK_FAMILY_INET4: return "INET4"; break;
+        case SOCK_FAMILY_INET6: return "INET6"; break;
+        case SOCK_FAMILY_DECnet: return "DECnet"; break;
+    }
+
+    return "<unknown>";
+}
