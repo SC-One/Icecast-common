@@ -716,7 +716,7 @@ sock_t sock_get_server_socket (int port, const char *sinterface)
 {
     struct sockaddr_storage sa;
     struct addrinfo hints, *res, *ai;
-    char service [10];
+    char service [16];
     int sock;
 
     if (port < 0)
