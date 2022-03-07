@@ -961,6 +961,60 @@ sock_t sock_accept(sock_t serversock, char *ip, size_t len)
     return ret;
 }
 
+bool sock_is_ipv4_mapped_supported(void)
+{
+#ifdef AF_INET6
+    struct sockaddr_storage ssock_addr;
+    struct sockaddr_in6 *ssock_addr_in6 = (struct sockaddr_in6 *)&ssock_addr;
+    socklen_t ssock_addr_len = sizeof(ssock_addr);
+    sock_t ssock = SOCK_ERROR;
+    sock_t csock;
+    char ip[MAX_ADDR_LEN+1];
+
+    ssock = sock_get_server_socket(0, "::");
+
+    if (ssock == SOCK_ERROR)
+        return false;
+
+    if (listen(ssock, 1) != 0) {
+        sock_close(ssock);
+        return false;
+    }
+
+    if (getsockname(ssock, (struct sockaddr*)&ssock_addr, &ssock_addr_len) != 0) {
+        sock_close(ssock);
+        return false;
+    }
+
+    if (ssock_addr_len < sizeof(struct sockaddr_in6) || ssock_addr_in6->sin6_family != AF_INET6) {
+        sock_close(ssock);
+        return false;
+    }
+
+    csock = sock_connect("127.0.0.1", ntohs(ssock_addr_in6->sin6_port));
+    if (csock == SOCK_ERROR) {
+        sock_close(ssock);
+        return false;
+    } else {
+        sock_close(csock);
+    }
+
+    csock = sock_accept(ssock, ip, sizeof(ip));
+    if (csock == SOCK_ERROR) {
+        sock_close(ssock);
+        return false;
+    } else {
+        sock_close(csock);
+    }
+
+    sock_close(ssock);
+
+    return strcmp(ip, "::ffff:127.0.0.1") == 0 ? true : false;
+#else
+    return false;
+#endif
+}
+
 sock_family_t sock_get_family(sock_t sock)
 {
     struct sockaddr addr;

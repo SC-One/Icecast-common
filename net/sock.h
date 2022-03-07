@@ -28,6 +28,7 @@
 #define __SOCK_H
 
 #include <stdarg.h>
+#include <stdbool.h>
 
 #ifdef HAVE_WINSOCK2_H
 #include <winsock2.h>
@@ -111,6 +112,7 @@ typedef enum {
 # define sock_listen _mangle(sock_listen)
 # define sock_set_send_buffer _mangle(sock_set_send_buffer)
 # define sock_accept _mangle(sock_accept)
+# define sock_is_ipv4_mapped_supported _mangle(sock_is_ipv4_mapped_supported)
 # define sock_get_family _mangle(sock_get_family)
 # define sock_family_to_string _mangle(sock_family_to_string)
 #endif
@@ -154,6 +156,8 @@ int sock_read_line(sock_t sock, char *string, const int len);
 sock_t sock_get_server_socket(int port, const char *sinterface);
 int sock_listen(sock_t serversock, int backlog);
 sock_t sock_accept(sock_t serversock, char *ip, size_t len);
+
+bool sock_is_ipv4_mapped_supported(void);
 
 /* Socket information */
 sock_family_t sock_get_family(sock_t sock);
