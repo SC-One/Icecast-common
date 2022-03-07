@@ -712,7 +712,7 @@ sock_t sock_connect_wto_bind (const char *hostname, int port, const char *bnd, i
 }
 
 
-sock_t sock_get_server_socket (int port, const char *sinterface)
+sock_t sock_get_server_socket (int port, const char *sinterface, bool prefer_inet6)
 {
     struct sockaddr_storage sa;
     struct addrinfo hints, *res, *ai;
@@ -721,6 +721,10 @@ sock_t sock_get_server_socket (int port, const char *sinterface)
 
     if (port < 0)
         return SOCK_ERROR;
+
+#ifndef AF_INET6
+    prefer_inet6 = false;
+#endif
 
     memset(&sa,    0, sizeof(sa));
     memset(&hints, 0, sizeof(hints));
@@ -733,27 +737,38 @@ sock_t sock_get_server_socket (int port, const char *sinterface)
     if (getaddrinfo(sinterface, service, &hints, &res))
         return SOCK_ERROR;
 
-    for (ai = res; ai; ai = ai->ai_next) {
-        int on = 1;
+    while (true) {
+        for (ai = res; ai; ai = ai->ai_next) {
+            int on = 1;
 
-        sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
-        if (sock < 0)
-            continue;
-
-        setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (const void *)&on, sizeof(on));
-
-#ifdef IPV6_V6ONLY
-        on = 0;
-        setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(on));
+#ifdef AF_INET6
+            if (prefer_inet6 && ai->ai_family != AF_INET6)
+                continue;
 #endif
 
-        if (bind(sock, ai->ai_addr, ai->ai_addrlen) < 0){
-            sock_close(sock);
-            continue;
+            sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+            if (sock < 0)
+                continue;
+
+            setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (const void *)&on, sizeof(on));
+
+#ifdef IPV6_V6ONLY
+            on = 0;
+            setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(on));
+#endif
+
+            if (bind(sock, ai->ai_addr, ai->ai_addrlen) < 0){
+                sock_close(sock);
+                continue;
+            }
+
+            freeaddrinfo(res);
+            return sock;
         }
 
-        freeaddrinfo(res);
-        return sock;
+        if (!prefer_inet6)
+            break;
+        prefer_inet6 = false;
     }
 
     freeaddrinfo(res);
@@ -971,7 +986,7 @@ bool sock_is_ipv4_mapped_supported(void)
     sock_t csock;
     char ip[MAX_ADDR_LEN+1];
 
-    ssock = sock_get_server_socket(0, "::");
+    ssock = sock_get_server_socket(0, "::", true);
 
     if (ssock == SOCK_ERROR)
         return false;
