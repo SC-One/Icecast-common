@@ -518,29 +518,22 @@ static void __vsnprintf(char *str, size_t size, const char *format, va_list ap) 
     const char * arg;
     char buf[80];
 
-    for (; *format && size; format++)
-    {
-        if ( !in_block )
-        {
+    for (; *format && size; format++) {
+        if ( !in_block ) {
             if ( *format == '%' ) {
                 in_block = 1;
                 block_size = 0;
                 block_len  = 0;
                 block_space = 0;
                 block_alt = 0;
-            }
-            else
-            {
+            } else {
                 *(str++) = *format;
                 size--;
             }
-        }
-        else
-        {
+        } else {
             // TODO: %l*[sdupi] as well as %.4080s and "%.*s
             arg = NULL;
-            switch (*format)
-            {
+            switch (*format) {
                 case 'l':
                     block_size++;
                     break;
@@ -575,37 +568,40 @@ static void __vsnprintf(char *str, size_t size, const char *format, va_list ap) 
                 case 'p':
                     snprintf(buf, sizeof(buf), "%p", (void*)va_arg(ap, void *));
                     arg = buf;
+                    /* fall through */
                 case 'd':
                 case 'i':
                 case 'u':
-                    if (!arg)
-                    {
-                        switch (block_size)
-                        {
+                    if (!arg) {
+                        switch (block_size) {
                             case 0:
-                                if (*format == 'u')
+                                if (*format == 'u') {
                                     snprintf(buf, sizeof(buf), "%u", (unsigned int)va_arg(ap, unsigned int));
-                                else
+                                } else {
                                     snprintf(buf, sizeof(buf), "%i", (int)va_arg(ap, int));
+                                }
                                 break;
                             case 1:
-                                if (*format == 'u')
+                                if (*format == 'u') {
                                     snprintf(buf, sizeof(buf), "%lu", (unsigned long int)va_arg(ap, unsigned long int));
-                                else
+                                } else {
                                     snprintf(buf, sizeof(buf), "%li", (long int)va_arg(ap, long int));
+                                }
                                 break;
                             case 2:
-                                if (*format == 'u')
+                                if (*format == 'u') {
                                     snprintf(buf, sizeof(buf), "%llu", (unsigned long long int)va_arg(ap, unsigned long long int));
-                                else
+                                } else {
                                     snprintf(buf, sizeof(buf), "%lli", (long long int)va_arg(ap, long long int));
+                                }
                                 break;
                             case 'z':
                                 /* We do not use 'z' type of snprintf() here as it is not safe to use on a few outdated platforms. */
-                                if (*format == 'u')
+                                if (*format == 'u') {
                                     snprintf(buf, sizeof(buf), "%llu", (unsigned long long int)va_arg(ap, size_t));
-                                else
+                                } else {
                                     snprintf(buf, sizeof(buf), "%lli", (long long int)va_arg(ap, ssize_t));
+                                }
                                 break;
                             default:
                                 snprintf(buf, sizeof(buf), "<<<invalid>>>");
@@ -613,14 +609,14 @@ static void __vsnprintf(char *str, size_t size, const char *format, va_list ap) 
                         }
                         arg = buf;
                     }
+                    /* fall through */
                 case 's':
                 case 'H':
                     // TODO.
                     if (!arg)
                         arg = va_arg(ap, const char *);
-                    if (*format != 'H') {
+                    if (*format != 'H')
                         block_alt = 0;
-                    }
                     if (!arg && !block_alt)
                         arg = "(null)";
                     if (!block_len) {
@@ -629,23 +625,19 @@ static void __vsnprintf(char *str, size_t size, const char *format, va_list ap) 
 
                     // the if() is the outer structure so the inner for()
                     // is branch optimized.
-                    if (*format == 'H' && !arg)
-                    {
+                    if (*format == 'H' && !arg) {
                         if (size && block_len) {
                             *(str++) = '-';
                             size--;
                             block_len--;
                         }
-                    }
-                    else if (*format == 'H')
-                    {
+                    } else if (*format == 'H') {
                         if (block_alt && size && block_len) {
                             *(str++) = '"';
                             size--;
                             block_len--;
                         }
-                        for (; *arg && block_len && size; arg++, size--, block_len--)
-                        {
+                        for (; *arg && block_len && size; arg++, size--, block_len--) {
                             if (!__vsnprintf__is_print(*arg, block_space)) {
                                 if (size < 4 || block_len < 4) {
                                     /* Use old system if we do not have space for new one */
@@ -668,9 +660,7 @@ static void __vsnprintf(char *str, size_t size, const char *format, va_list ap) 
                             size--;
                             block_len--;
                         }
-                    }
-                    else
-                    {
+                    } else {
                         for (; *arg && block_len && size; arg++, size--, block_len--)
                             *(str++) = *arg;
                     }
