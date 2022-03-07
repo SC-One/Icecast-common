@@ -51,6 +51,7 @@
 #include <windows.h>
 #endif
 
+#include "../net/sock.h"
 #include "log.h"
 
 #define LOG_MAXLOGS 25
@@ -606,6 +607,17 @@ static void __vsnprintf(char *str, size_t size, const char *format, va_list ap) 
                             default:
                                 snprintf(buf, sizeof(buf), "<<<invalid>>>");
                                 break;
+                        }
+                        arg = buf;
+                    }
+                    /* fall through */
+                case 'R':
+                    if (!arg) {
+                        sock_t sock = va_arg(ap, sock_t);
+                        if (sock == SOCK_ERROR) {
+                            snprintf(buf, sizeof(buf), "SOCK_ERROR");
+                        } else {
+                            snprintf(buf, sizeof(buf), "%lli", (long long int)sock);
                         }
                         arg = buf;
                     }
