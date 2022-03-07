@@ -722,41 +722,41 @@ sock_t sock_get_server_socket (int port, const char *sinterface)
     if (port < 0)
         return SOCK_ERROR;
 
-    memset (&sa, 0, sizeof(sa));
-    memset (&hints, 0, sizeof(hints));
+    memset(&sa,    0, sizeof(sa));
+    memset(&hints, 0, sizeof(hints));
 
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_flags = AI_PASSIVE | AI_ADDRCONFIG | AI_NUMERICSERV | AI_NUMERICHOST;
+    hints.ai_family   = AF_UNSPEC;
+    hints.ai_flags    = AI_PASSIVE | AI_ADDRCONFIG | AI_NUMERICSERV | AI_NUMERICHOST;
     hints.ai_socktype = SOCK_STREAM;
-    snprintf (service, sizeof (service), "%d", port);
+    snprintf(service, sizeof(service), "%d", port);
 
-    if (getaddrinfo (sinterface, service, &hints, &res))
+    if (getaddrinfo(sinterface, service, &hints, &res))
         return SOCK_ERROR;
-    ai = res;
-    do
-    {
+
+    for (ai = res; ai; ai = ai->ai_next) {
         int on = 1;
-        sock = socket (ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+
+        sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
         if (sock < 0)
             continue;
 
-        setsockopt (sock, SOL_SOCKET, SO_REUSEADDR, (const void *)&on, sizeof(on));
-        on = 0;
+        setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (const void *)&on, sizeof(on));
+
 #ifdef IPV6_V6ONLY
-        setsockopt (sock, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof on);
+        on = 0;
+        setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(on));
 #endif
 
-        if (bind (sock, ai->ai_addr, ai->ai_addrlen) < 0)
-        {
-            sock_close (sock);
+        if (bind(sock, ai->ai_addr, ai->ai_addrlen) < 0){
+            sock_close(sock);
             continue;
         }
-        freeaddrinfo (res);
+
+        freeaddrinfo(res);
         return sock;
+    }
 
-    } while ((ai = ai->ai_next));
-
-    freeaddrinfo (res);
+    freeaddrinfo(res);
     return SOCK_ERROR;
 }
 
