@@ -34,6 +34,10 @@
 #include <winsock2.h>
 #endif
 
+#ifdef HAVE_WS2TCPIP_H
+#include <ws2tcpip.h>
+#endif
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #elif _WIN32
