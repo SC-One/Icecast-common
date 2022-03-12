@@ -879,12 +879,15 @@ sock_t sock_connect_wto_bind (const char *hostname, int port, const char *bnd, i
 ** interface.  if interface is null, listen on all interfaces.
 ** returns the socket, or SOCK_ERROR on failure
 */
-sock_t sock_get_server_socket(int port, const char *sinterface)
+sock_t sock_get_server_socket (int port, const char *sinterface, bool prefer_inet6)
 {
     struct sockaddr_in sa;
     int error, opt;
     sock_t sock;
     char ip[MAX_ADDR_LEN];
+
+    /* Not supported. */
+    (void)prefer_inet6;
 
     if (port < 0)
         return SOCK_ERROR;
