@@ -102,26 +102,6 @@ void sock_shutdown(void)
     resolver_shutdown();
 }
 
-/* sock_get_localip
-**
-** gets the local ip address for the machine
-** the ip it returns *should* be on the internet.
-** in any case, it's as close as we can hope to get
-** unless someone has better ideas on how to do this
-*/
-char *sock_get_localip(char *buff, int len)
-{
-    char temp[1024];
-
-    if (gethostname(temp, sizeof(temp)) != 0)
-        return NULL;
-
-    if (resolver_getip(temp, buff, len))
-        return buff;
-
-    return NULL;
-}
-
 /* sock_error
 ** 
 ** returns the last socket error
@@ -174,32 +154,6 @@ int sock_recoverable(int error)
         return 0;
     }
 }
-
-int sock_stalled (int error)
-{
-    switch (error)
-    {
-    case EAGAIN:
-    case EINPROGRESS:
-    case EALREADY:
-#if defined(EWOULDBLOCK) && EWOULDBLOCK != EAGAIN
-    case EWOULDBLOCK:
-#endif
-#if defined (WSAEWOULDBLOCK) && WSAEWOULDBLOCK != EWOULDBLOCK
-    case WSAEWOULDBLOCK:
-#endif
-#if defined (WSAEINPROGRESS) && WSAEINPROGRESS != EINPROGRESS
-    case WSAEINPROGRESS:
-#endif
-#ifdef ERESTART
-    case ERESTART:
-#endif
-        return 1;
-    default:
-        return 0;
-    }
-}
-
 
 static int sock_connect_pending (int error)
 {
@@ -319,45 +273,6 @@ int sock_close(sock_t sock)
 #endif
 }
 
-/* sock_writev
- *
- * write multiple buffers at once, return bytes actually written
- */
-#ifdef HAVE_WRITEV
-
-ssize_t sock_writev (sock_t sock, const struct iovec *iov, size_t count)
-{
-    return writev (sock, iov, count);
-}
-
-#else
-
-ssize_t sock_writev (sock_t sock, const struct iovec *iov, size_t count)
-{
-    int i = count, accum = 0, ret;
-    const struct iovec *v = iov;
-
-    while (i)
-    {
-        if (v->iov_base && v->iov_len)
-        {
-            ret = sock_write_bytes (sock, v->iov_base, v->iov_len);
-            if (ret == -1 && accum==0)
-                return -1;
-            if (ret == -1)
-                ret = 0;
-            accum += ret;
-            if (ret < (int)v->iov_len)
-                break;
-        }
-        v++;
-        i--;
-    }
-    return accum;
-}
-
-#endif
-
 /* sock_write_bytes
 **
 ** write bytes to the socket
@@ -375,16 +290,6 @@ int sock_write_bytes(sock_t sock, const void *buff, size_t len)
     } */
 
     return send(sock, buff, len, 0);
-}
-
-/* sock_write_string
-**
-** writes a string to a socket
-** This function must only be called with a blocking socket.
-*/
-int sock_write_string(sock_t sock, const char *buff)
-{
-    return (sock_write_bytes(sock, buff, strlen(buff)) > 0);
 }
 
 /* sock_write

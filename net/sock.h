@@ -44,18 +44,6 @@
 #include <compat.h>
 #endif
 
-#ifdef HAVE_SYS_UIO_H
-#include <sys/uio.h>
-#else
-#ifndef _SYS_UIO_H
-struct iovec
-{
-    void   *iov_base;
-    size_t iov_len;
-};
-#endif
-#endif
-
 #if !defined(HAVE_INET_ATON) && defined(HAVE_INET_PTON)
 #define inet_aton(a,b) inet_pton(AF_INET, (a), (b))
 #endif
@@ -90,11 +78,9 @@ typedef enum {
 #ifdef _mangle
 # define sock_initialize _mangle(sock_initialize)
 # define sock_shutdown _mangle(sock_shutdown)
-# define sock_get_localip _mangle(sock_get_localip)
 # define sock_error _mangle(sock_error)
 # define sock_set_error _mangle(sock_set_error)
 # define sock_recoverable _mangle(sock_recoverable)
-# define sock_stalled _mangle(sock_stalled)
 # define sock_valid_socket _mangle(sock_valid_socket)
 # define sock_set_blocking _mangle(sock_set_blocking)
 # define sock_set_nolinger _mangle(sock_set_nolinger)
@@ -108,8 +94,6 @@ typedef enum {
 # define sock_write_bytes _mangle(sock_write_bytes)
 # define sock_write _mangle(sock_write)
 # define sock_write_fmt _mangle(sock_write_fmt)
-# define sock_write_string _mangle(sock_write_string)
-# define sock_writev _mangle(sock_writev)
 # define sock_read_bytes _mangle(sock_read_bytes)
 # define sock_read_line _mangle(sock_read_line)
 # define sock_get_server_socket _mangle(sock_get_server_socket)
@@ -124,10 +108,8 @@ typedef enum {
 /* Misc socket functions */
 void sock_initialize(void);
 void sock_shutdown(void);
-char *sock_get_localip(char *buff, int len);
 int sock_error(void);
 int sock_recoverable(int error);
-int sock_stalled(int error);
 int sock_valid_socket(sock_t sock);
 int sock_active (sock_t sock);
 int sock_set_blocking(sock_t sock, int block);
@@ -148,9 +130,6 @@ int sock_connected(sock_t sock, int timeout);
 int sock_write_bytes(sock_t sock, const void *buff, size_t len);
 int sock_write(sock_t sock, const char *fmt, ...);
 int sock_write_fmt(sock_t sock, const char *fmt, va_list ap);
-int sock_write_string(sock_t sock, const char *buff);
-ssize_t sock_writev (sock_t sock, const struct iovec *iov, size_t count);
-
 
 /* Socket read functions */
 int sock_read_bytes(sock_t sock, char *buff, size_t len);
