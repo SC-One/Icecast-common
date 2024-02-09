@@ -36,6 +36,9 @@
 #include <windows.h>
 #include <mmsystem.h>
 #else
+#include <unistd.h>
+#endif
+
 #ifdef TIME_WITH_SYS_TIME
 #  include <sys/time.h>
 #  include <time.h>
@@ -45,9 +48,6 @@
 #  else
 #    include <time.h>
 #  endif
-#endif
-
-#include <unistd.h>
 #endif
 
 #ifdef HAVE_SYS_SELECT_H
