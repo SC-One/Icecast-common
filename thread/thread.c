@@ -513,7 +513,11 @@ void thread_mutex_unlock_c(mutex_t *mutex, int line, char *file)
 
 void thread_cond_create_c(cond_t *cond, int line, char *file)
 {
-    pthread_cond_init(&cond->sys_cond, NULL);
+    pthread_condattr_t attr;
+    pthread_condattr_init(&attr);
+    pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
+    pthread_cond_init(&cond->sys_cond, &attr);
+    pthread_condattr_destroy(&attr);
     pthread_mutex_init(&cond->cond_mutex, NULL);
 }
 
@@ -537,8 +541,15 @@ void thread_cond_timedwait_c(cond_t *cond, int millis, int line, char *file)
 {
     struct timespec time;
 
-    time.tv_sec = millis/1000;
-    time.tv_nsec = (millis - time.tv_sec*1000)*1000000;
+    clock_gettime(CLOCK_MONOTONIC, &time);
+
+    time.tv_nsec += millis*1000000;
+
+    if (time.tv_nsec >= 1000000000) {
+        unsigned long int extra = time.tv_nsec / 1000000000;
+        time.tv_nsec -= extra * 1000000000;
+        time.tv_sec  += extra;
+    }
 
     pthread_mutex_lock(&cond->cond_mutex);
     pthread_cond_timedwait(&cond->sys_cond, &cond->cond_mutex, &time);
